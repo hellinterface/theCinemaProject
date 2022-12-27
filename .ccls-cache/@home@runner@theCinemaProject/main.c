@@ -119,7 +119,6 @@ int main(void) {
   printShadow(27, 29, 54, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT);
 
   gotoxy(8, 12);
-  printf("Hello");
 
   gotoxy(0, 31);
 
@@ -148,6 +147,7 @@ int main(void) {
   }
   
 	fclose(fin_users);
+  
 	system("clear");
   printf("");
   fillBackground();

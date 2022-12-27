@@ -119,10 +119,9 @@ int main(void) {
   printShadow(27, 29, 54, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT);
 
   gotoxy(8, 12);
-  printf("Hello");
 
   gotoxy(0, 31);
-
+/*
   FILE *fin_films = fopen("films.txt", "rt");
   while (!feof(fin_films)) {
     film *t = (film *)malloc(sizeof(film));
@@ -136,6 +135,7 @@ int main(void) {
   }
 	fclose(fin_films);
 
+  
   FILE *fin_users = fopen("users.txt", "rt");
   while (!feof(fin_users)) {
     user *temp = (user *)malloc(sizeof(user));
@@ -148,8 +148,29 @@ int main(void) {
   }
   
 	fclose(fin_users);
-	system("clear");
-  printf("");
+  */
+	// system("clear");
+ //  // printf("");
+ //  gotoxy(0, 0);
+ //  fillBackground();
+ //  gotoxy(0, 0);
+ //  fillLine(COLOR_BACKGROUND_FRONT);
+ //  fillLine(COLOR_BACKGROUND_FRONT);
+ //  fillLine(COLOR_BACKGROUND_FRONT);
+ //  printShadow(0, 4, VIEWPORT_WIDTH - 1, COLOR_BACKGROUND_APP,
+ //              COLOR_SHADOW_FRONT);
+ //  cursorHide();
+
+ //  gotoxy(4, 2);
+ //  printFm("ВХОД", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+  
+ //  drawRect(0, 12,VIEWPORT_WIDTH - 1 , 18, COLOR_BACKGROUND_BACK);
+ //  printShadow(4, 26, 26, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK);
+
+ 
+  	system("clear");
+  // printf("");
+  gotoxy(0, 0);
   fillBackground();
   gotoxy(0, 0);
   fillLine(COLOR_BACKGROUND_FRONT);
@@ -160,11 +181,13 @@ int main(void) {
   cursorHide();
 
   gotoxy(4, 2);
-  printFm("ВХОД", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+  printFm("РЕГИСТРАЦИЯ/ВХОД", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
   
-  drawRect(0, 12,VIEWPORT_WIDTH - 1 , 18, COLOR_BACKGROUND_BACK);
-  printShadow(4, 26, 26, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK);
-  printf ("hello");
+  drawRect(50, 10, 75, 22, COLOR_BACKGROUND_FRONT);
+  printShadow(52, 25, 25, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK);
+  
+  gotoxy(54, 11);
+  printFm("ЛОГИН", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
   
 	FILE *fout_users = fopen("users.txt", "a");
 

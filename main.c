@@ -7,12 +7,13 @@
 #define VIEWPORT_WIDTH 80
 #define VIEWPORT_HEIGHT 30
 
-#define COLOR_BACKGROUND_FRONT "48;2;120;100;200;"
-#define COLOR_BACKGROUND_BACK "48;2;64;51;117;"
-#define COLOR_BACKGROUND_APP "48;2;20;0;40;"
-#define COLOR_TEXT_FRONT "38;2;10;10;30"
-#define COLOR_SHADOW_FRONT "38;2;60;40;120"
-#define COLOR_SHADOW_BACK "38;2;33;26;66"
+#define COLOR_BACKGROUND_FRONT "120;100;200"
+#define COLOR_BACKGROUND_BACK "64;51;117"
+#define COLOR_BACKGROUND_APP "20;0;40"
+#define COLOR_TEXT_BACK "10;10;30"
+#define COLOR_TEXT_FRONT "255;255;255"
+#define COLOR_SHADOW_FRONT "60;40;120"
+#define COLOR_SHADOW_BACK "33;26;66"
 
 // https://github.com/pikvic/fefu2022/blob/main/cinema.md
 // ☆★
@@ -60,31 +61,38 @@ char *fgetsFlex(FILE *file, int len) {
   }
   return returnValue;
 }
-
 char* readLogin(int x, int y, char *color_bg, char *color_text, int low_limit, int high_limit, int charlim_low, int charlim_high) {
-	int a = 0;
+	int currentLength = 0;
 	char c = '1';
   char *str = (char *)malloc(high_limit);
   for (int i = 0; i < 20; i++) {
     str[i] = ' ';
   }
-  while (a < high_limit) {
+  while (1 == 1) {
     c = getch();
     // printf("%i %c / ", c, c);
-    if (c >= charlim_low && c <= charlim_high) {
-      str[a] = c;
-      gotoxy(x, y);
+		if (currentLength < high_limit) {
+	    if (c >= charlim_low && c <= charlim_high) {
+	      str[currentLength] = c;
+	      currentLength++;
+      	goToPoint(x, y);
+      	printFm(str, color_bg, color_text);
+				if (currentLength < high_limit) {
+      	goToPoint(x+currentLength, y);
+      	printFm("|", color_bg, color_text);
+				}
+	    }
+		}
+	  if (c == 127) { // Backspace
+	    str[currentLength - 1] = ' ';
+	    currentLength--;
+      goToPoint(x, y);
       printFm(str, color_bg, color_text);
-      a++;
-    }
-    if (c == 127) { // Backspace
-      str[a - 1] = ' ';
-      gotoxy(x, y);
-      printFm(str, color_bg, color_text);
-      a--;
-    }
-    if (c == 10) { // Enter
-      if (a > low_limit-1) {
+      goToPoint(x+currentLength, y);
+      printFm("|", color_bg, color_text);
+	  }
+		else if(c == 10) { // Enter
+      if (currentLength > low_limit-1) {
         break;
       }
     }
@@ -98,7 +106,7 @@ int main(void) {
   system("clear");
   printf("");
   fillBackground();
-  gotoxy(0, 0);
+  goToPoint(0, 0);
   fillLine(COLOR_BACKGROUND_FRONT);
   fillLine(COLOR_BACKGROUND_FRONT);
   fillLine(COLOR_BACKGROUND_FRONT);
@@ -106,7 +114,7 @@ int main(void) {
               COLOR_SHADOW_FRONT);
   cursorHide();
 
-  gotoxy(4, 2);
+  goToPoint(4, 2);
   printFm("КАТАЛОГ", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
 
   drawRect(4, 8, 26, 26, COLOR_BACKGROUND_BACK);
@@ -118,9 +126,10 @@ int main(void) {
   drawRect(27, 6, 54, 28, COLOR_BACKGROUND_FRONT);
   printShadow(27, 29, 54, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT);
 
-  gotoxy(8, 12);
 
-  gotoxy(0, 31);
+  goToPoint(8, 12);
+
+  goToPoint(0, 31);
 /*
   FILE *fin_films = fopen("films.txt", "rt");
   while (!feof(fin_films)) {
@@ -151,9 +160,9 @@ int main(void) {
   */
 	// system("clear");
  //  // printf("");
- //  gotoxy(0, 0);
+ //  goToPoint(0, 0);
  //  fillBackground();
- //  gotoxy(0, 0);
+ //  goToPoint(0, 0);
  //  fillLine(COLOR_BACKGROUND_FRONT);
  //  fillLine(COLOR_BACKGROUND_FRONT);
  //  fillLine(COLOR_BACKGROUND_FRONT);
@@ -161,7 +170,7 @@ int main(void) {
  //              COLOR_SHADOW_FRONT);
  //  cursorHide();
 
- //  gotoxy(4, 2);
+ //  goToPoint(4, 2);
  //  printFm("ВХОД", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
   
  //  drawRect(0, 12,VIEWPORT_WIDTH - 1 , 18, COLOR_BACKGROUND_BACK);
@@ -170,40 +179,51 @@ int main(void) {
  
   	system("clear");
   // printf("");
-  gotoxy(0, 0);
+  goToPoint(0, 0);
   fillBackground();
-  gotoxy(0, 0);
-  fillLine(COLOR_BACKGROUND_FRONT);
-  fillLine(COLOR_BACKGROUND_FRONT);
-  fillLine(COLOR_BACKGROUND_FRONT);
-  printShadow(0, 4, VIEWPORT_WIDTH - 1, COLOR_BACKGROUND_APP,
-              COLOR_SHADOW_FRONT);
   cursorHide();
+	
+	drawRectWithShadow(0, 0, VIEWPORT_WIDTH-1, 3, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 0);
 
-  gotoxy(4, 2);
+  goToPoint(4, 2);
   printFm("РЕГИСТРАЦИЯ/ВХОД", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
-  
-  drawRect(50, 10, 75, 22, COLOR_BACKGROUND_FRONT);
-  printShadow(52, 25, 25, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK);
-  
-  gotoxy(54, 11);
-  printFm("ЛОГИН", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+
+	drawRectWithShadow(0, 14, VIEWPORT_WIDTH-1, 18, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK, 0);
+	
+	drawRectWithShadow(48, 10, 75, 26, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 1);
+	
+  goToPoint(54, 11);
+  printBold("Логин", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+	drawInputBox(50, 12, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP);
+	
+  goToPoint(54, 16);
+  printBold("Пароль", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+	drawInputBox(50, 17, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP);
+	
+  goToPoint(54, 21);
+  printBold("Номер карты", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+	drawInputBox(50, 22, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP);
+
+	// kind of a nice design
+  // goToPoint(54, 12);
+  // printFm(" TEST ", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
+	
+  goToPoint(52, 13);
+  //printFm("12345678901234567890", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
+
   
 	FILE *fout_users = fopen("users.txt", "a");
 
 	user* t = (user*)malloc(sizeof(user));
-	
-  gotoxy(30, 16);
-  printFm("Login:", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
 
-	t->name = readLogin(30, 17, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT, 3, 20, 48, 122);
+	t->name = readLogin(52, 13, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT, 3, 20, 48, 122);
 
-  gotoxy(30, 19);
+  goToPoint(30, 19);
   printFm("Password:", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
 	
 	t->password = readLogin(30, 20, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT, 3, 20, 48, 122);
 
-  gotoxy(30, 22);
+  goToPoint(30, 22);
   printFm("Card:", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
 	
 	t->cardNumber = readLogin(30, 23, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT, 16, 16, 48, 57);

@@ -1,5 +1,6 @@
 #include "graphics.h"
 #include "termiosWrapper.h"
+#include "uiElements.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +8,7 @@
 #define VIEWPORT_WIDTH 80
 #define VIEWPORT_HEIGHT 30
 
+#define COLOR_BACKGROUND_HIGHLIGHT "160;140;240"
 #define COLOR_BACKGROUND_FRONT "120;100;200"
 #define COLOR_BACKGROUND_BACK "64;51;117"
 #define COLOR_BACKGROUND_APP "20;0;40"
@@ -60,46 +62,6 @@ char *fgetsFlex(FILE *file, int len) {
     }
   }
   return returnValue;
-}
-char* readLogin(int x, int y, char *color_bg, char *color_text, int low_limit, int high_limit, int charlim_low, int charlim_high) {
-	int currentLength = 0;
-	char c = '1';
-  char *str = (char *)malloc(high_limit);
-  for (int i = 0; i < 20; i++) {
-    str[i] = ' ';
-  }
-  while (1 == 1) {
-    c = getch();
-    // printf("%i %c / ", c, c);
-		if (currentLength < high_limit) {
-	    if (c >= charlim_low && c <= charlim_high) {
-	      str[currentLength] = c;
-	      currentLength++;
-      	goToPoint(x, y);
-      	printFm(str, color_bg, color_text);
-				if (currentLength < high_limit) {
-      	goToPoint(x+currentLength, y);
-      	printFm("|", color_bg, color_text);
-				}
-	    }
-		}
-	  if (c == 127) { // Backspace
-	    str[currentLength - 1] = ' ';
-	    currentLength--;
-      goToPoint(x, y);
-      printFm(str, color_bg, color_text);
-      goToPoint(x+currentLength, y);
-      printFm("|", color_bg, color_text);
-	  }
-		else if(c == 10) { // Enter
-      if (currentLength > low_limit-1) {
-        break;
-      }
-    }
-    // printf("%i %c / ", c, c);
-  }
-	//strcpy(target, str);
-	return str;
 }
 
 int main(void) {
@@ -177,33 +139,53 @@ int main(void) {
  //  printShadow(4, 26, 26, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK);
 
  
-  	system("clear");
-  // printf("");
+  system("clear");
   goToPoint(0, 0);
   fillBackground();
   cursorHide();
-	
-	drawRectWithShadow(0, 0, VIEWPORT_WIDTH-1, 3, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 0);
 
+	// Header
+	drawRectWithShadow(0, 0, VIEWPORT_WIDTH-1, 3, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 0);
   goToPoint(4, 2);
   printFm("РЕГИСТРАЦИЯ/ВХОД", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+	
+  goToPoint(8, 9);
+  printFm("Используйте [TAB] для навигации", COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
 
-	drawRectWithShadow(0, 14, VIEWPORT_WIDTH-1, 18, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK, 0);
+	drawRectWithShadow(0, 14, VIEWPORT_WIDTH-1, 20, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK, 0);
 	
-	drawRectWithShadow(48, 10, 75, 26, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 1);
+	drawRectWithShadow(48, 8, 75, 26, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 1);
 	
-  goToPoint(54, 11);
+  goToPoint(54, 9);
   printBold("Логин", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
-	drawInputBox(50, 12, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP);
+	uiElement* t1 = uiInit_textInput(50, 10, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
 	
-  goToPoint(54, 16);
+  goToPoint(54, 14);
   printBold("Пароль", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
-	drawInputBox(50, 17, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP);
+	uiElement* t2 = uiInit_textInput(50, 15, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
 	
-  goToPoint(54, 21);
+  goToPoint(54, 19);
   printBold("Номер карты", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
-	drawInputBox(50, 22, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP);
+	uiElement* t3 = uiInit_textInput(50, 20, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 57);
 
+	uiElement* t4 = uiInit_button(50, 23, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Назад");
+	
+	uiElement* t5 = uiInit_button(63, 23, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Создать");
+
+	t1->next = t2;
+	t2->next = t3;
+	t3->next = t4;
+	t4->next = t5;
+	t5->next = t1;
+		
+	t1->previous = t5;
+	t2->previous = t1;
+	t3->previous = t2;
+	t4->previous = t3;
+	t5->previous = t4;
+
+	t1->focus(t1);
+	
 	// kind of a nice design
   // goToPoint(54, 12);
   // printFm(" TEST ", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
@@ -211,7 +193,8 @@ int main(void) {
   goToPoint(52, 13);
   //printFm("12345678901234567890", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
 
-  
+
+	/*
 	FILE *fout_users = fopen("users.txt", "a");
 
 	user* t = (user*)malloc(sizeof(user));
@@ -235,11 +218,13 @@ int main(void) {
 	fprintf(fout_users, "%s\n%s\n%s\n%i\n", t->name, t->password, t->cardNumber, t->isAdmin);
 
 	fclose(fout_users);
+	*/
 	
-  return 0;
+  //return 0;
   // https://stackoverflow.com/questions/10463201/getch-and-arrow-codes
 
 	char c = '1';
+	c = getch();
   if (c == 27) {
     c = getch();
     c = getch();
@@ -253,6 +238,6 @@ int main(void) {
       // LEFT
     }
   }
-  // printf("CODE: %c", c);
+  printf("CODE: %i", c);
   return 0;
 }

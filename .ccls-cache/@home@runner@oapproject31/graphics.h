@@ -3,6 +3,7 @@
 #define VIEWPORT_WIDTH 80
 #define VIEWPORT_HEIGHT 30
 
+#define COLOR_BACKGROUND_HIGHLIGHT "160;140;240"
 #define COLOR_BACKGROUND_FRONT "120;100;200"
 #define COLOR_BACKGROUND_BACK "64;51;117"
 #define COLOR_BACKGROUND_APP "20;0;40"
@@ -107,9 +108,9 @@ void drawRectWithShadow(int x1, int y1, int x2, int y2, char *color_fill, char *
   printShadow(x1, y2+1, x2, color_bg, color_shadow);
 	if (needsDecorations != 0) {
   goToPoint(x1, y1);
-  printFm("━┛", color_fill, color_bg);
-  goToPoint(x2-1, y2);
-  printFm("┏━", color_fill, color_bg);
+  printFm("━━┛", color_fill, color_bg);
+  goToPoint(x2-2, y2);
+  printFm("┏━━", color_fill, color_bg);
 	}
 }
 

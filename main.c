@@ -37,7 +37,9 @@ char *fgetsFlex(FILE *file, int len) {
   return returnValue;
 }
 
+// Функция рисовки страницы каталога
 void redrawCatalogue() {
+	system("clear");
   goToPoint(0, 0);
   fillBackground();
   
@@ -52,12 +54,12 @@ void redrawCatalogue() {
 	drawRectWithShadow(28, 8, 53, 27, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 1);
 
   goToPoint(5, 12);
-  printBold((currentFilm->previous)->title, COLOR_BACKGROUND_BACK, COLOR_TEXT_BACK);
+  printBoldLimited((currentFilm->previous)->title, 27-3-4, 5, 12, COLOR_BACKGROUND_BACK, COLOR_TEXT_BACK);
   goToPoint(56, 12);
-  printBold((currentFilm->next)->title, COLOR_BACKGROUND_BACK, COLOR_TEXT_BACK);
+  printBoldLimited((currentFilm->next)->title, 27-3-4, 56, 12, COLOR_BACKGROUND_BACK, COLOR_TEXT_BACK);
   
   goToPoint(30, 10);
-  printBold(currentFilm->title, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+  printBoldLimited(currentFilm->title, 27-3-4, 30, 10, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
   goToPoint(28, 13);
   printFor("━", 53-28+1, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP);
 
@@ -69,6 +71,94 @@ void redrawCatalogue() {
   r2->next = r1;
 
   r1->focus(r1, &currentView);
+}
+
+// Функция рисовки страницы регистрации
+void drawSignUpView() {
+	system("clear");
+  goToPoint(0, 0);
+  fillBackground();
+	// Header
+	drawRectWithShadow(0, 0, VIEWPORT_WIDTH-1, 3, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 0);
+  goToPoint(4, 2);
+  printFm("РЕГИСТРАЦИЯ", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+	
+  goToPoint(8, 9);
+  printFm("Используйте [TAB] для навигации", COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
+
+	drawRectWithShadow(0, 14, VIEWPORT_WIDTH-1, 20, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK, 0);
+	
+	drawRectWithShadow(48, 8, 75, 26, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 1);
+	
+  goToPoint(54, 9);
+  printBold("Логин", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+	uiElement* t1 = uiInit_textInput(50, 10, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
+	
+  goToPoint(54, 14);
+  printBold("Пароль", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+	uiElement* t2 = uiInit_textInput(50, 15, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
+	
+  goToPoint(54, 19);
+  printBold("Номер карты", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+	uiElement* t3 = uiInit_textInput(50, 20, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 57);
+
+	uiElement* t4 = uiInit_button(50, 23, 0, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Назад");
+	
+	uiElement* t5 = uiInit_button(63, 23, 0, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Создать");
+
+	t1->next = t2;
+	t2->next = t3;
+	t3->next = t4;
+	t4->next = t5;
+	t5->next = t1;
+		
+	t1->previous = t5;
+	t2->previous = t1;
+	t3->previous = t2;
+	t4->previous = t3;
+	t5->previous = t4;
+}
+
+// Функция рисовки страницы входа
+void drawLogInView() {
+	system("clear");
+  goToPoint(0, 0);
+  fillBackground();
+	// Header
+	drawRectWithShadow(0, 0, VIEWPORT_WIDTH-1, 3, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 0);
+  goToPoint(4, 2);
+  printFm("ВХОД", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+	
+  goToPoint(8, 9);
+  printFm("Используйте [TAB] для навигации", COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
+
+	drawRectWithShadow(0, 14, VIEWPORT_WIDTH-1, 20, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK, 0);
+	
+	drawRectWithShadow(48, 8, 75, 26, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 1);
+	
+  goToPoint(54, 9);
+  printBold("Логин", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+	uiElement* t1 = uiInit_textInput(50, 10, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
+	
+  goToPoint(54, 14);
+  printBold("Пароль", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+	uiElement* t2 = uiInit_textInput(50, 15, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
+
+	uiElement* t3 = uiInit_button(50, 19, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Войти");
+	
+	uiElement* t4 = uiInit_button(50, 22, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Создать аккаунт");
+
+	t1->next = t2;
+	t2->next = t3;
+	t3->next = t4;
+	t4->next = t1;
+		
+	t1->previous = t4;
+	t2->previous = t1;
+	t3->previous = t2;
+	t4->previous = t3;
+
+	t1->focus(t1, currentView);
 }
 
 int main(void) {
@@ -136,49 +226,8 @@ int main(void) {
 
  
   system("clear");
-  goToPoint(0, 0);
-  fillBackground();
   cursorHide();
 
-	// Header
-	drawRectWithShadow(0, 0, VIEWPORT_WIDTH-1, 3, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 0);
-  goToPoint(4, 2);
-  printFm("РЕГИСТРАЦИЯ/ВХОД", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
-	
-  goToPoint(8, 9);
-  printFm("Используйте [TAB] для навигации", COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
-
-	drawRectWithShadow(0, 14, VIEWPORT_WIDTH-1, 20, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK, 0);
-	
-	drawRectWithShadow(48, 8, 75, 26, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 1);
-	
-  goToPoint(54, 9);
-  printBold("Логин", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
-	uiElement* t1 = uiInit_textInput(50, 10, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
-	
-  goToPoint(54, 14);
-  printBold("Пароль", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
-	uiElement* t2 = uiInit_textInput(50, 15, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
-	
-  goToPoint(54, 19);
-  printBold("Номер карты", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
-	uiElement* t3 = uiInit_textInput(50, 20, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 57);
-
-	uiElement* t4 = uiInit_button(50, 23, 0, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Назад");
-	
-	uiElement* t5 = uiInit_button(63, 23, 0, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Создать");
-
-	t1->next = t2;
-	t2->next = t3;
-	t3->next = t4;
-	t4->next = t5;
-	t5->next = t1;
-		
-	t1->previous = t5;
-	t2->previous = t1;
-	t3->previous = t2;
-	t4->previous = t3;
-	t5->previous = t4;
 
 	// t1->focus(t1);
 	
@@ -188,10 +237,22 @@ int main(void) {
 	
   goToPoint(52, 13);
   // printFm("12345678901234567890", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
-
+	
+	drawLogInView();
 
   sleep(1);
 
+	currentFilm = currentFilm->next;
+	currentFilm = currentFilm->next;
+	currentFilm = currentFilm->next;
+	currentFilm = currentFilm->next;
+	currentFilm = currentFilm->next;
+	currentFilm = currentFilm->next;
+	currentFilm = currentFilm->next;
+	currentFilm = currentFilm->next;
+	currentFilm = currentFilm->next;
+	currentFilm = currentFilm->next;
+	
   redrawCatalogue();
 	/*
 	FILE *fout_users = fopen("users.txt", "a");

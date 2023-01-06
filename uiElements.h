@@ -179,9 +179,9 @@ uiElement* uiInit_button(int x1, int y, int x2, char* color_bg, char* color_fill
     element->x2 = x2;
   }
   else {
-    element->x2 = element->length+4;
+    element->x2 = x1 + element->length + 4;
   }
-	drawInputBox(x1, y, x2, color_bg, color_fill);
+	drawInputBox(x1, y, element->x2, color_bg, color_fill);
 	goToPoint(x1+2, y+1);
 	printFm(value, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT);
 	return element;

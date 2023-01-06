@@ -1,4 +1,7 @@
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+//#include <wchar.h>
 
 #define VIEWPORT_WIDTH 80
 #define VIEWPORT_HEIGHT 30
@@ -55,6 +58,36 @@ void printFm(char *str, char *color_bg, char *color_fg) {
 void printBold(char *str, char *color_bg, char *color_fg) {
   printf("\e[48;2;%s;38;2;%s;1m", color_bg, color_fg);
   printf("%s", str);
+  printf("\e[0m");
+}
+
+void _printLimited(char *str, int singleLineLimit, int startX, int startY) {
+  char *word;
+	char *nstr[800];
+	int currentLineLength = 0;
+	int yOffset = 0;
+	//wcscpy(nstr, str);
+	strcpy(nstr, str);
+  word = strtok(nstr, " ");
+	int currentWordLength = strlen(word)/2;
+	//printf("%i", currentWordLength);
+  while (word != NULL)
+  {
+		currentWordLength = strlen(word)/2;
+		if (currentLineLength + currentWordLength + 1 > singleLineLimit) {
+			currentLineLength = 0;
+			yOffset++;
+			goToPoint(startX, startY + yOffset);
+		}
+    printf("%s ", word);
+		currentLineLength += currentWordLength;
+    word = strtok(NULL, " ");
+  }
+}
+
+void printBoldLimited(char *str, int singleLineLimit, int startX, int startY, char *color_bg, char *color_fg) {
+  printf("\e[48;2;%s;38;2;%s;1m", color_bg, color_fg);
+	_printLimited(str, singleLineLimit, startX, startY);
   printf("\e[0m");
 }
 

@@ -1,0 +1,26 @@
+
+// Функция рисовки диалогового окна
+void drawOverlay_dialogWindowClassic(char *message) {
+
+	int width = strlenPlus(message)+4;
+
+  goToPoint(4, 4);
+
+	int x1 = (VIEWPORT_WIDTH-1)/2 - width/2;
+	int x2 = (VIEWPORT_WIDTH-1)/2 + width/2;
+	int y1 = (VIEWPORT_HEIGHT-1)/2 - 6/2;
+	int y2 = (VIEWPORT_HEIGHT-1)/2 + 6/2;
+	
+	drawRectWithShadow(x1, y1, x2, y2, COLOR_BACKGROUND_DIALOG, COLOR_BACKGROUND_BACK, COLOR_SHADOW_FRONT, 1);
+  goToPoint(x1+2, y1+1);
+  printFm(message, COLOR_BACKGROUND_DIALOG, COLOR_BACKGROUND_APP);
+	
+	uiElement* t1 = uiInit_button(x1+2, y1+3, x2-2, COLOR_BACKGROUND_DIALOG, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, "OK");
+
+	t1->focus(t1, currentView);
+}
+
+	
+	// kind of a nice design
+  // goToPoint(54, 12);
+  // printFm(" TEST ", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);

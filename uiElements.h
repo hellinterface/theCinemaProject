@@ -7,19 +7,23 @@
 extern film *currentFilm;
 
 typedef struct uiElement {
-	int x1;
-	int y;
-	int x2;
-	char* color_bg;
-	char* color_fill;
-	char* color_text;
-	int limit_low;
-	int limit_high;
-	int asciilim_low;
-	int asciilim_high;
-	int length;
-	char* value;
-	void (*focus)(struct uiElement *self, char **currentView);
+	int x1; // X-координата слева
+	int y; // Y-координата сверху
+	int x2; // X-координата справа
+	char* color_bg; // Цвет фона за элементом
+	char* color_fill; // Цвет фоновой заливки элемента
+	char* color_text; // Цвет текста в элементе
+	int limit_low; // Текстовое поле: минимальное количество символов
+	int limit_high; // Текстовое поле: максимальное количество символов
+	int asciilim_low; // Текстовое поле: минимальный ASCII-код вводимых символов
+	int asciilim_high; // Текстовое поле: максимальнйы ASCII-код вводимых символов
+	int length; // 
+	char* value; // Текст в элементе
+	void (*focus)(struct uiElement *self, char **currentView); // Функция, которая выделяет данный элемент как активный и ждёт ввода
+	void (*show)(struct uiElement *self); // Функция, которая рисует элемент (в нормальном состоянии) на экране
+	void (*onInput)(); // struct uiElement *self, char **currentView
+	void (*onBlur)(struct uiElement *self, char **currentView);
+	char* (*getValue)(struct uiElement *self);
 	struct uiElement* next;
 	struct uiElement* previous;
 } uiElement;
@@ -41,6 +45,7 @@ char* readText(uiElement *element, char** currentView) {
 	int x = element->x1+2;
 	int y = element->y+1;
 	int broken = 0;
+	uiElement *broken_elementToSwitchTo = NULL;
 	char c = '1';
 	
   goToPoint(x, y);
@@ -76,13 +81,45 @@ char* readText(uiElement *element, char** currentView) {
 		else if (c == 10) { // Enter
       if (element->length > element->limit_low-1) {
 				broken = 1;
+				broken_elementToSwitchTo = element->next;
         break;
       }
     }
 		else if (c == 9) { // Tab
-			broken = 1;
 			break;
 		}
+    else if (c == 27) {
+      c = getch();
+      c = getch();
+      if (c == 'A') {
+        // UP
+				broken = 1;
+				broken_elementToSwitchTo = element->previous;
+				break;
+      } 
+			else if (c == 'B') {
+        // DOWN
+				broken = 1;
+				broken_elementToSwitchTo = element->next;
+				break;
+      } 
+			else if (c == 'C') {
+        // RIGHT
+    		if (*currentView == "КАТАЛОГ") {
+        	currentFilm = currentFilm->next;
+        	drawCatalogue();
+					break;
+    		}
+      } 
+			else if (c == 'D') {
+        // LEFT
+    		if (*currentView == "КАТАЛОГ") {
+        	currentFilm = currentFilm->previous;
+        	drawCatalogue();
+					break;
+    		}
+      }
+    }
     // printf("%i %c / ", c, c);
   }
 	if (broken == 1) {
@@ -90,7 +127,7 @@ char* readText(uiElement *element, char** currentView) {
   		goToPoint(x+element->length, y);
   		printFm(" ", element->color_fill, element->color_text);
 		}
-		element->next->focus(element->next, currentView);
+		broken_elementToSwitchTo->focus(broken_elementToSwitchTo, currentView);
 	}
 	//strcpy(target, str);
 	return element->value;
@@ -100,47 +137,84 @@ void waitForButtonPress(uiElement *element, char** currentView) {
 	int x = element->x1+2;
 	int y = element->y+1;
 	int broken = 0;
+	uiElement *broken_elementToSwitchTo = NULL;
 	char c = '1';
-	drawInputBox(element->x1, element->y, element->x2, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_HIGHLIGHT);
+	drawInputBox(element->x1, element->y, element->x2, element->color_bg, COLOR_BACKGROUND_HIGHLIGHT);
 	goToPoint(x, y);
 	printBold(element->value, COLOR_BACKGROUND_HIGHLIGHT, COLOR_BACKGROUND_APP);
   while (1 == 1) {
     c = getch();
 		if (c == 10) { // Enter
 			// do an action...
+			element->onInput();
 			break;
     }
 		else if (c == 9) { // Tab
-			broken = 1;
-			drawInputBox(element->x1, element->y, element->x2, element->color_bg, element->color_fill);
-			goToPoint(x, y);
-			printFm(element->value, element->color_fill, element->color_text);
 			break;
 		}
-    else if (*currentView == "КАТАЛОГ") {
-      if (c == 27) {
-        c = getch();
-        c = getch();
-        if (c == 'A') {
-          // UP
-        } else if (c == 'B') {
-          // DOWN
-        } else if (c == 'C') {
-          // RIGHT
-          currentFilm = currentFilm->next;
-          redrawCatalogue();
-        } else if (c == 'D') {
-          // LEFT
-          currentFilm = currentFilm->previous;
-          redrawCatalogue();
-        }
+    else if (c == 27) {
+      c = getch();
+      c = getch();
+      if (c == 'A') {
+        // UP
+				broken = 1;
+				broken_elementToSwitchTo = element->previous;
+				break;
+      } 
+			else if (c == 'B') {
+        // DOWN
+				broken = 1;
+				broken_elementToSwitchTo = element->next;
+				break;
+      } 
+			else if (c == 'C') {
+        // RIGHT
+    		if (*currentView == "КАТАЛОГ") {
+        	currentFilm = currentFilm->next;
+        	drawCatalogue();
+					break;
+    		}
+      } 
+			else if (c == 'D') {
+        // LEFT
+    		if (*currentView == "КАТАЛОГ") {
+        	currentFilm = currentFilm->previous;
+        	drawCatalogue();
+					break;
+    		}
       }
-			break;
     }
   }
 	if (broken == 1) {
-		element->next->focus(element->next, currentView);
+		drawInputBox(element->x1, element->y, element->x2, element->color_bg, element->color_fill);
+		goToPoint(x, y);
+		printFm(element->value, element->color_fill, element->color_text);
+		broken_elementToSwitchTo->focus(broken_elementToSwitchTo, currentView);
 	}
+}
+
+void showTextInput(uiElement* element) {
+	drawInputBox(element->x1, element->y, element->x2, element->color_bg, element->color_fill);
+}
+void showButton(uiElement* element) {
+	drawInputBox(element->x1, element->y, element->x2, element->color_bg, element->color_fill);
+	goToPoint(element->x1+2, element->y+1);
+	printFm(element->value, element->color_fill, COLOR_TEXT_FRONT);
+}
+
+char* getValue(uiElement* element) {
+	int position = strlenPlus(element->value)-1;
+  for (int i = position; i >= 0; i--) {
+    if (element->value[i] != ' ') break;
+		position--;
+  }
+	position++;
+  char *returnValue = (char*)malloc(position+1);
+  for (int i = 0; i < position; i++) {
+    returnValue[i] = element->value[i];
+  }
+	returnValue[position] = '\0';
+	return returnValue;
 }
 
 uiElement* uiInit_textInput(int x1, int y, int x2, char* color_bg, char* color_fill, char* color_text, int limit_low, int limit_high, int asciilim_low, int asciilim_high) {
@@ -161,7 +235,8 @@ uiElement* uiInit_textInput(int x1, int y, int x2, char* color_bg, char* color_f
     element->value[i] = ' ';
   }
 	element->focus = readText;
-	drawInputBox(x1, y, x2, color_bg, color_fill);
+	element->show = showTextInput;
+	element->getValue = getValue;
 	return element;
 }
 
@@ -175,14 +250,12 @@ uiElement* uiInit_button(int x1, int y, int x2, char* color_bg, char* color_fill
 	element->value = value;
 	element->length = (int)strlen(value) / 2 - 1;
 	element->focus = waitForButtonPress;
+	element->show = showButton;
   if (x2 > element->length+4) {
     element->x2 = x2;
   }
   else {
     element->x2 = x1 + element->length + 4;
   }
-	drawInputBox(x1, y, element->x2, color_bg, color_fill);
-	goToPoint(x1+2, y+1);
-	printFm(value, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT);
 	return element;
 }

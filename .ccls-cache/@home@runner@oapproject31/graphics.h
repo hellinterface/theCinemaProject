@@ -69,11 +69,11 @@ void _printLimited(char *str, int singleLineLimit, int startX, int startY) {
 	//wcscpy(nstr, str);
 	strcpy(nstr, str);
   word = strtok(nstr, " ");
-	int currentWordLength = strlen(word)/2;
+	int currentWordLength = strlenPlus(word);
 	//printf("%i", currentWordLength);
   while (word != NULL)
   {
-		currentWordLength = strlen(word)/2;
+		currentWordLength = strlenPlus(word);
 		if (currentLineLength + currentWordLength + 1 > singleLineLimit) {
 			currentLineLength = 0;
 			yOffset++;
@@ -83,6 +83,12 @@ void _printLimited(char *str, int singleLineLimit, int startX, int startY) {
 		currentLineLength += currentWordLength;
     word = strtok(NULL, " ");
   }
+}
+
+void printFmLimited(char *str, int singleLineLimit, int startX, int startY, char *color_bg, char *color_fg) {
+  printf("\e[48;2;%s;38;2;%sm", color_bg, color_fg);
+	_printLimited(str, singleLineLimit, startX, startY);
+  printf("\e[0m");
 }
 
 void printBoldLimited(char *str, int singleLineLimit, int startX, int startY, char *color_bg, char *color_fg) {

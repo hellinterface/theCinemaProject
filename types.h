@@ -13,6 +13,7 @@
 
 typedef struct user user;
 typedef struct film film;
+typedef struct navPointRoll navPointRoll;
 
 struct user {
   char *name;       // min = 3, max = 20
@@ -31,4 +32,11 @@ struct film {
   int isFavourite;
   film *previous;
   film *next;
+};
+
+struct navPointRoll {
+	char* title;
+	void (*switchTo)();
+	navPointRoll *previous;
+	navPointRoll *next;
 };

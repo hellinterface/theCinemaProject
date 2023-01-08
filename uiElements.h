@@ -86,6 +86,7 @@ char* readText(uiElement *element, char** currentView) {
       }
     }
 		else if (c == 9) { // Tab
+			enterHeaderSwitcher();
 			break;
 		}
     else if (c == 27) {
@@ -150,6 +151,7 @@ void waitForButtonPress(uiElement *element, char** currentView) {
 			break;
     }
 		else if (c == 9) { // Tab
+			enterHeaderSwitcher();
 			break;
 		}
     else if (c == 27) {

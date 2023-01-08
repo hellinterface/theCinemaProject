@@ -1,12 +1,4 @@
-username
-Zpassword
+test
+passWORD123
 1111222233334444
-0
-admin
-adminpass
-1111222233334444
-1
-vvv
-pass
-4444333322221111
 0

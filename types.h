@@ -28,6 +28,7 @@ struct film {
   char *country; // max = 64
   char *genre;   // max = 64
   double rating;
+  int isFavourite;
   film *previous;
   film *next;
 };

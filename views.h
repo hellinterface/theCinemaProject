@@ -13,6 +13,8 @@
 #define COLOR_SHADOW_FRONT "60;40;120"
 #define COLOR_SHADOW_BACK "33;26;66"
 
+void toggleFavouriteStateOfCurrentFilm();
 void drawCatalogue();
+void drawHeader();
 char *fgetsFlex(FILE *file, int len);
 int strlenPlus(char *str);

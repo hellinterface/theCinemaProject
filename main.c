@@ -71,16 +71,20 @@ char *fgetsFlex(FILE *file, int len) {
   return returnValue;
 }
 
+void drawHeader(char *title) {
+	// Header
+	drawRectWithShadow(0, 0, VIEWPORT_WIDTH-1, 3, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 0);
+  goToPoint(4, 2);
+  printFm(title, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+}
+
 // Функция рисовки страницы каталога
 void drawCatalogue() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
   currentView = "КАТАЛОГ";
-	// Header
-	drawRectWithShadow(0, 0, VIEWPORT_WIDTH-1, 3, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 0);
-  goToPoint(4, 2);
-  printFm(currentView, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+	drawHeader("КАТАЛОГ");
 
   drawRectWithShadow(3, 10, 27, 25, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK, 1);
 	drawRectWithShadow(54, 10, 78, 25, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK, 1);
@@ -97,6 +101,14 @@ void drawCatalogue() {
   goToPoint(28, 13);
   printFor("━", 53-28+1, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP);
 
+	char* text = "Удалить из избранного";
+	if (currentFilm->isFavourite == 0) {
+		text = "Добавить в избранное";
+	}
+	int textLength = strlenPlus(text);
+	button_catalogue_toggleFavouriteState->value = text;
+	button_catalogue_toggleFavouriteState->length = textLength;
+	
 	button_catalogue_toDetailsPage->show(button_catalogue_toDetailsPage);
 	button_catalogue_toggleFavouriteState->show(button_catalogue_toggleFavouriteState);
 	
@@ -109,10 +121,7 @@ void drawSignUpView() {
   goToPoint(0, 0);
   fillBackground();
   currentView = "РЕГИСТРАЦИЯ";
-	// Header
-	drawRectWithShadow(0, 0, VIEWPORT_WIDTH-1, 3, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 0);
-  goToPoint(4, 2);
-  printFm(currentView, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+	drawHeader("РЕГИСТРАЦИЯ");
 	
   goToPoint(8, 9);
   printFm("Используйте [TAB] для навигации", COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
@@ -143,10 +152,7 @@ void drawLogInView() {
   goToPoint(0, 0);
   fillBackground();
   currentView = "ВХОД";
-	// Header
-	drawRectWithShadow(0, 0, VIEWPORT_WIDTH-1, 3, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 0);
-  goToPoint(4, 2);
-  printFm(currentView, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+	drawHeader("ВХОД");
 	
   goToPoint(8, 9);
   printFm("Используйте [TAB] для навигации", COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
@@ -168,6 +174,47 @@ void drawLogInView() {
 	input_login_username->focus(input_login_username, &currentView);
 }
 
+// Функция рисовки страницы входа
+void drawDetailedView() {
+	system("clear");
+  goToPoint(0, 0);
+  fillBackground();
+  currentView = "ДЕТАЛИ";
+	drawHeader("ДЕТАЛИ");
+
+	char ratingString[4];
+	snprintf(ratingString, 4, "%f", currentFilm->rating);
+	
+  goToPoint(4, 4);
+  printFm("Название фильма: ", COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
+  printFm(currentFilm->title, COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
+
+  goToPoint(4, 6);
+  printFm("Рейтинг: ", COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
+  printFm(ratingString, COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
+	
+  goToPoint(4, 8);
+  printFm("Страна: ", COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
+  printFm(currentFilm->country, COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
+	
+  goToPoint(4, 10);
+  printFm("Жанры: ", COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
+  printFm(currentFilm->genre, COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
+
+	char* text = "Удалить из избранного";
+	if (currentFilm->isFavourite == 0) {
+		text = "Добавить в избранное";
+	}
+	int textLength = strlenPlus(text);
+	button_details_toggleFavouriteState->value = text;
+	button_details_toggleFavouriteState->length = textLength;
+
+	button_details_toCatalogue->show(button_details_toCatalogue);
+	button_details_toggleFavouriteState->show(button_details_toggleFavouriteState);
+	
+	button_details_toCatalogue->focus(button_details_toCatalogue, &currentView);
+}
+
 int strlenPlus(char *str) {
 	int result = 0;
 	int total = strlen(str);
@@ -178,6 +225,11 @@ int strlenPlus(char *str) {
 		i++;
 	}
 	return result;
+}
+
+void buttonPress_dialogWindowOk(uiElement *element) {
+	drawHeader(currentView);
+	free(element);
 }
 
 // Функция рисовки диалогового окна
@@ -204,6 +256,7 @@ void drawOverlay_dialogWindow(char *message) {
 
 	t1->next = t1;
 	t1->previous = t1;
+	t1->onInput = buttonPress_dialogWindowOk;
 	t1->show(t1);
 	t1->focus(t1, &currentView);
 }
@@ -245,7 +298,7 @@ void buttonPress_signup_createUser() {
 	int passcheck_hasLowercase = 0;
 	int passcheck_hasNumbers = 0;
 
-	for (int i = 0; strlen(password); i++) {
+	for (int i = 0; i < strlen(password); i++) {
 		char c = password[i];
 		if (passcheck_hasUppercase == 0 && c <= 57 && c >= 48) {
 			passcheck_hasUppercase = 1;
@@ -304,6 +357,7 @@ void readFilmList() {
     t->country = fgetsFlex(fin_films, 128);
     t->genre = fgetsFlex(fin_films, 128);
     fscanf(fin_films, "%lf\n", &(t->rating));
+    t->isFavourite = 0;
 		//printf("%s  //  ", t->title);
     if (currentFilm == NULL) {
       firstFilm = t;
@@ -334,6 +388,61 @@ void readUserList() {
 	fclose(fin_users);
 }
 
+film* findFilm(char* title) {
+	film* t = firstFilm;
+	if (strcmp(t->title, title) == 0) return t;
+	t = t->next;
+	while (t != firstFilm) {
+		if (strcmp(t->title, title) == 0) return t;
+		t = t->next;
+	}
+	return NULL;
+}
+
+void readFavoriteList(int userID) {
+	char filename[80] = "favorite_";
+	strcat(filename, userDatabase[userID]->name);
+	strcat(filename, ".txt");
+  FILE *fin_favouriteFilms = fopen(filename, "rt");
+  while (!feof(fin_favouriteFilms)) {
+    film *t = (film*)malloc(sizeof(film));
+    char  *title = fgetsFlex(fin_favouriteFilms, 128);
+		int temp1;
+		double temp2;
+    fscanf(fin_favouriteFilms, "%i\n", &temp1);
+    fgetsFlex(fin_favouriteFilms, 128);
+    fgetsFlex(fin_favouriteFilms, 128);
+    fscanf(fin_favouriteFilms, "%lf\n", &temp2);
+		film *foundFilm = findFilm(title);
+    if (foundFilm != NULL) {
+    	foundFilm->isFavourite = 1;
+    }
+  }
+	fclose(fin_favouriteFilms);
+}
+
+void toggleFavouriteStateOfCurrentFilm() {
+	char* text = "Удалить из избранного";
+	if (currentFilm->isFavourite == 1) {
+		currentFilm->isFavourite = 0;
+		text = "Добавить в избранное";
+	}
+	else {
+		currentFilm->isFavourite = 1;
+	}
+	int textLength = strlenPlus(text);
+	if (strcmp(currentView, "ДЕТАЛИ") == 0) {
+		button_details_toggleFavouriteState->value = text;
+		button_details_toggleFavouriteState->length = textLength;
+		button_details_toggleFavouriteState->focus(button_details_toggleFavouriteState, &currentView);
+	}
+	else if (strcmp(currentView, "КАТАЛОГ") == 0) {
+		button_catalogue_toggleFavouriteState->value = text;
+		button_catalogue_toggleFavouriteState->length = textLength;
+		button_catalogue_toggleFavouriteState->focus(button_catalogue_toggleFavouriteState, &currentView);
+	}
+}
+
 void linkAllElements() {
 
 	// Вход //////////////////////////////////////////////////////
@@ -360,13 +469,14 @@ void linkAllElements() {
 	
 	input_signup_username = uiInit_textInput(50, 10, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
 	input_signup_password = uiInit_textInput(50, 15, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
-	input_signup_cardNumber = uiInit_textInput(50, 20, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 57);
-	button_signup_ok = uiInit_button(50, 23, 0, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Назад");
-	button_signup_toLogInPage = uiInit_button(63, 23, 0, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Создать");
+	input_signup_cardNumber = uiInit_textInput(50, 20, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 16, 16, 48, 57);
+	button_signup_toLogInPage = uiInit_button(50, 23, 0, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Назад");
+	button_signup_ok = uiInit_button(63, 23, 0, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Создать");
 	
-	button_signup_ok->onInput = drawLogInView;
+	button_signup_ok->onInput = buttonPress_signup_createUser;
+	button_signup_toLogInPage->onInput = drawLogInView;
 	
-	input_signup_username->next = input_login_password;
+	input_signup_username->next = input_signup_password;
 	input_signup_password->next = input_signup_cardNumber;
 	input_signup_cardNumber->next = button_signup_ok;
 	button_signup_ok->next = button_signup_toLogInPage;
@@ -388,6 +498,9 @@ void linkAllElements() {
 	
 	button_catalogue_toDetailsPage->previous = button_catalogue_toggleFavouriteState;
 	button_catalogue_toggleFavouriteState->previous = button_catalogue_toDetailsPage;
+
+	button_catalogue_toDetailsPage->onInput = drawDetailedView;
+	button_catalogue_toggleFavouriteState->onInput = toggleFavouriteStateOfCurrentFilm;
 	
 	// IF ADMIN
 	/*
@@ -399,17 +512,23 @@ void linkAllElements() {
 	button_admin_addFilm->previous = button_admin_removeFilm;
 	button_catalogue_toDetailsPage->previous = button_admin_addFilm;
 	*/
-/*
 	// Детальный просмотр //////////////////////////////////////////////////////
+	
+	button_details_toCatalogue = uiInit_button(29, 19, 52, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Назад");
+	button_details_toggleFavouriteState = uiInit_button(29, 22, 52, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Добавить в избранное");
 	
 	button_details_toCatalogue->next = button_details_toggleFavouriteState;
 	button_details_toggleFavouriteState->next = button_details_toCatalogue;
 	
 	button_details_toCatalogue->previous = button_details_toggleFavouriteState;
 	button_details_toggleFavouriteState->previous = button_details_toCatalogue;
+
+	button_details_toCatalogue->onInput = drawCatalogue;
+	button_details_toggleFavouriteState->onInput = toggleFavouriteStateOfCurrentFilm;
 	
 	// Настройки //////////////////////////////////////////////////////
 	
+/*
 	button_settings_goBack->next = button_settings_toSignUpPage;
 	button_settings_toSignUpPage->next = button_settings_goBack;
 	
@@ -452,7 +571,12 @@ int main(void) {
 
   system("clear");
   cursorHide();
+
+	readFavoriteList(currentUserIndex);
+
+  drawCatalogue();
 	
+	return 0;
 	drawLogInView();
 
 	drawOverlay_dialogWindow("test");
@@ -461,24 +585,7 @@ int main(void) {
 	
   drawCatalogue();
 	
-  // return 0;
   // https://stackoverflow.com/questions/10463201/getch-and-arrow-codes
-
-	char c = '1';
-	c = getch();
-  if (c == 27) {
-    c = getch();
-    c = getch();
-    if (c == 'A') {
-      // UP
-    } else if (c == 'B') {
-      // DOWN
-    } else if (c == 'C') {
-      // RIGHT
-    } else if (c == 'D') {
-      // LEFT
-    }
-  }
-  printf("CODE: %i", c);
+	
   return 0;
 }

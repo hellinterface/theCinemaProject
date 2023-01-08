@@ -14,7 +14,9 @@ char* currentView = "КАТАЛОГ";
 film* currentFilm = NULL;
 film* firstFilm = NULL;
 
-user* userDatabase[20];
+user* userDatabase[64];
+int currentUserIndex;
+int totalUsers;
 
 uiElement* input_login_username;
 uiElement* input_login_password;
@@ -74,11 +76,11 @@ void drawCatalogue() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
-  
+  currentView = "КАТАЛОГ";
 	// Header
 	drawRectWithShadow(0, 0, VIEWPORT_WIDTH-1, 3, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 0);
   goToPoint(4, 2);
-  printBold("КАТАЛОГ", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+  printFm(currentView, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
 
   drawRectWithShadow(3, 10, 27, 25, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK, 1);
 	drawRectWithShadow(54, 10, 78, 25, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK, 1);
@@ -106,10 +108,11 @@ void drawSignUpView() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
+  currentView = "РЕГИСТРАЦИЯ";
 	// Header
 	drawRectWithShadow(0, 0, VIEWPORT_WIDTH-1, 3, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 0);
   goToPoint(4, 2);
-  printFm("РЕГИСТРАЦИЯ", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+  printFm(currentView, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
 	
   goToPoint(8, 9);
   printFm("Используйте [TAB] для навигации", COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
@@ -139,10 +142,11 @@ void drawLogInView() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
+  currentView = "ВХОД";
 	// Header
 	drawRectWithShadow(0, 0, VIEWPORT_WIDTH-1, 3, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 0);
   goToPoint(4, 2);
-  printFm("ВХОД", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+  printFm(currentView, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
 	
   goToPoint(8, 9);
   printFm("Используйте [TAB] для навигации", COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
@@ -200,7 +204,6 @@ void drawOverlay_dialogWindow(char *message) {
 
 	t1->next = t1;
 	t1->previous = t1;
-	
 	t1->show(t1);
 	t1->focus(t1, &currentView);
 }
@@ -208,13 +211,13 @@ void drawOverlay_dialogWindow(char *message) {
 void buttonPress_login() {
 	//drawOverlay_dialogWindow();
 	int i = 0;
-	int found = -1;\
+	int found = -1;
 	char* inputValue_name = input_login_username->getValue(input_login_username);
 	char* inputValue_password = input_login_password->getValue(input_login_password);
 	while (userDatabase[i] != NULL) {
 		if (strcmp(userDatabase[i]->name, inputValue_name) == 0) {
-			printf("\nFOUND IT");
 			found = i;
+			currentUserIndex = i;
 			if (strcmp(userDatabase[i]->password, inputValue_password) == 0) {
 				drawCatalogue();
 			}
@@ -229,7 +232,6 @@ void buttonPress_login() {
 		}
 	}
 	if (found != -1) {
-			printf("\nYEAH");
 	}
 	else {
 		drawOverlay_dialogWindow("Пользователя с таким именем не существует.");
@@ -275,7 +277,10 @@ void buttonPress_signup_createUser() {
 		t->isAdmin = 0;
 		fprintf(fout_users, "\n%s\n%s\n%s\n%i", t->name, t->password, t->cardNumber, t->isAdmin);
 		fclose(fout_users);
+		currentUserIndex = totalUsers;
+		totalUsers++;
 		drawOverlay_dialogWindow("Аккаунт создан.");
+		drawCatalogue();
 	}
 	
 
@@ -311,6 +316,22 @@ void readFilmList() {
     }
   }
 	fclose(fin_films);
+}
+
+void readUserList() {
+  FILE *fin_users = fopen("users.txt", "rt");
+	int i = 0;
+  while (!feof(fin_users)) {
+    user *temp = (user*)malloc(sizeof(user));
+		temp->name = fgetsFlex(fin_users, 64);
+		temp->password = fgetsFlex(fin_users, 64);
+		temp->cardNumber = fgetsFlex(fin_users, 64);
+    fscanf(fin_users, " %i\n", &(temp->isAdmin));
+		userDatabase[i] = temp;
+		i++;
+  }
+	totalUsers = i;
+	fclose(fin_users);
 }
 
 void linkAllElements() {
@@ -427,43 +448,16 @@ int main(void) {
   currentFilm->next = firstFilm;
   currentFilm = firstFilm;
 
-  FILE *fin_users = fopen("users.txt", "rt");
-	int zxkzxk = 0;
-	int shite = 0;
-  while (!feof(fin_users)) {
-    user *temp = (user*)malloc(sizeof(user));
-		temp->name = fgetsFlex(fin_users, 64);
-		temp->password = fgetsFlex(fin_users, 64);
-		temp->cardNumber = fgetsFlex(fin_users, 64);
-    fscanf(fin_users, " %i\n", &(temp->isAdmin));
-		userDatabase[zxkzxk] = temp;
-		zxkzxk++;
-  }
-	fclose(fin_users);
-
-	
+	readUserList();
 
   system("clear");
   cursorHide();
 	
-  goToPoint(52, 13);
-	
 	drawLogInView();
 
-	drawOverlay_dialogWindow("АБВГДЕЖЗИ");
+	drawOverlay_dialogWindow("test");
 	
   sleep(1);
-
-	currentFilm = currentFilm->next;
-	currentFilm = currentFilm->next;
-	currentFilm = currentFilm->next;
-	currentFilm = currentFilm->next;
-	currentFilm = currentFilm->next;
-	currentFilm = currentFilm->next;
-	currentFilm = currentFilm->next;
-	currentFilm = currentFilm->next;
-	currentFilm = currentFilm->next;
-	currentFilm = currentFilm->next;
 	
   drawCatalogue();
 	

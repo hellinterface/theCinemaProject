@@ -17,5 +17,5 @@ void enterHeaderSwitcher();
 void toggleFavouriteStateOfCurrentFilm();
 void drawCatalogue();
 void drawHeader();
-char *fgetsFlex(FILE *file, int len);
+char *fgetsPlus(FILE *file, int len);
 int strlenPlus(char *str);

@@ -8,7 +8,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <locale.h>
-#include <wchar.h>
 
 char* currentView = "КАТАЛОГ";
 film* currentFilm = NULL;
@@ -54,6 +53,7 @@ navPointRoll* navPoint_exit;
 navPointRoll* navPoint_addFilm;
 
 navPointRoll* currentNavPoint;
+navPointRoll* previousNavPoint;
 navPointRoll* headerSwitcher_selectedNavPoint;
 
 
@@ -67,6 +67,15 @@ void initNavPoints() {
 	navPoint_exit = (navPointRoll*)malloc(sizeof(navPointRoll));
 	navPoint_addFilm = (navPointRoll*)malloc(sizeof(navPointRoll));
 
+	navPoint_currentLogInOrSignOut->switchTo = NULL;
+	navPoint_catalogue->switchTo = NULL;
+	navPoint_favourites->switchTo = NULL;
+	navPoint_details->switchTo = NULL;
+	navPoint_settings->switchTo = NULL;
+	navPoint_logout->switchTo = NULL;
+	navPoint_exit->switchTo = NULL;
+	navPoint_addFilm->switchTo = NULL;
+	
 	navPoint_currentLogInOrSignOut->title = "ВХОД";
 	navPoint_catalogue->title = "КАТАЛОГ";
 	navPoint_favourites->title = "ИЗБРАННОЕ";
@@ -112,7 +121,7 @@ void navPoints_normalMode() {
 // https://gist.github.com/RabaDabaDoba/145049536f815903c79944599c6f952a
 // https://en.wikipedia.org/wiki/ANSI_escape_code
 
-char *fgetsFlex(FILE *file, int len) {
+char *fgetsPlus(FILE *file, int len) {
   char *returnValue;
   char str1[len], str2[len], currentChar;
   fgets(str1, len, file);
@@ -131,6 +140,18 @@ char *fgetsFlex(FILE *file, int len) {
     }
   }
   return returnValue;
+}
+
+int strlenPlus(char *str) {
+	int result = 0;
+	int total = strlen(str);
+	int i = 0;
+	while (i < total) {
+		if (str[i] < 0) i++;
+		result++;
+		i++;
+	}
+	return result;
 }
 
 void drawHeader(char *title) {
@@ -188,6 +209,7 @@ void drawSignUpView() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
+	previousNavPoint = currentNavPoint;
 	currentNavPoint = navPoint_currentLogInOrSignOut;
 	currentNavPoint->title = "РЕГИСТРАЦИЯ";
   currentView = "РЕГИСТРАЦИЯ";
@@ -221,6 +243,7 @@ void drawLogInView() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
+	previousNavPoint = currentNavPoint;
 	currentNavPoint = navPoint_currentLogInOrSignOut;
 	currentNavPoint->title = "ВХОД";
   currentView = "ВХОД";
@@ -251,6 +274,7 @@ void drawCatalogue() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
+	previousNavPoint = currentNavPoint;
 	currentNavPoint = navPoint_catalogue;
   currentView = "КАТАЛОГ";
 	drawHeader("КАТАЛОГ");
@@ -313,6 +337,7 @@ void drawDetailedView() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
+	previousNavPoint = currentNavPoint;
 	currentNavPoint = navPoint_details;
   currentView = "ДЕТАЛИ";
 	drawHeader("ДЕТАЛИ");
@@ -352,18 +377,6 @@ void drawDetailedView() {
 	button_details_toCatalogue->focus(button_details_toCatalogue, &currentView);
 }
 
-int strlenPlus(char *str) {
-	int result = 0;
-	int total = strlen(str);
-	int i = 0;
-	while (i < total) {
-		if (str[i] < 0) i++;
-		result++;
-		i++;
-	}
-	return result;
-}
-
 void buttonPress_dialogWindowOk(uiElement *element) {
 	drawHeader(currentView);
 	free(element);
@@ -371,7 +384,6 @@ void buttonPress_dialogWindowOk(uiElement *element) {
 
 // Функция рисовки диалогового окна
 void drawOverlay_dialogWindow(char *message) {
-
 	int width = strlenPlus(message)+9;
 	if (width > VIEWPORT_WIDTH/3*2) {
 		width = VIEWPORT_WIDTH/3*2;
@@ -491,10 +503,10 @@ void readFilmList() {
   FILE *fin_films = fopen("films.txt", "rt");
   while (!feof(fin_films)) {
     film *t = (film *)malloc(sizeof(film));
-    t->title = fgetsFlex(fin_films, 128);
+    t->title = fgetsPlus(fin_films, 128);
     fscanf(fin_films, "%i\n", &(t->year));
-    t->country = fgetsFlex(fin_films, 128);
-    t->genre = fgetsFlex(fin_films, 128);
+    t->country = fgetsPlus(fin_films, 128);
+    t->genre = fgetsPlus(fin_films, 128);
     fscanf(fin_films, "%lf\n", &(t->rating));
     t->isFavourite = 0;
 		//printf("%s  //  ", t->title);
@@ -516,9 +528,9 @@ void readUserList() {
 	int i = 0;
   while (!feof(fin_users)) {
     user *temp = (user*)malloc(sizeof(user));
-		temp->name = fgetsFlex(fin_users, 64);
-		temp->password = fgetsFlex(fin_users, 64);
-		temp->cardNumber = fgetsFlex(fin_users, 64);
+		temp->name = fgetsPlus(fin_users, 64);
+		temp->password = fgetsPlus(fin_users, 64);
+		temp->cardNumber = fgetsPlus(fin_users, 64);
     fscanf(fin_users, " %i\n", &(temp->isAdmin));
 		userDatabase[i] = temp;
 		i++;
@@ -545,12 +557,12 @@ void readFavoriteList(int userID) {
   FILE *fin_favouriteFilms = fopen(filename, "rt");
   while (!feof(fin_favouriteFilms)) {
     film *t = (film*)malloc(sizeof(film));
-    char  *title = fgetsFlex(fin_favouriteFilms, 128);
+    char  *title = fgetsPlus(fin_favouriteFilms, 128);
 		int temp1;
 		double temp2;
     fscanf(fin_favouriteFilms, "%i\n", &temp1);
-    fgetsFlex(fin_favouriteFilms, 128);
-    fgetsFlex(fin_favouriteFilms, 128);
+    fgetsPlus(fin_favouriteFilms, 128);
+    fgetsPlus(fin_favouriteFilms, 128);
     fscanf(fin_favouriteFilms, "%lf\n", &temp2);
 		film *foundFilm = findFilm(title);
     if (foundFilm != NULL) {

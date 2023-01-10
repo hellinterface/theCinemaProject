@@ -30,15 +30,18 @@ uiElement* button_signup_toLogInPage;
 
 uiElement* button_catalogue_toDetailsPage;
 uiElement* button_catalogue_toggleFavouriteState;
+uiElement* button_catalogue_adminRemoveFilm;
 
 uiElement* button_details_toCatalogue;
 uiElement* button_details_toggleFavouriteState;
+uiElement* button_details_adminRemoveFilm;
 
 uiElement* button_settings_goBack;
 uiElement* button_settings_toSignUpPage;
 
-uiElement* button_admin_addFilm;
-uiElement* button_admin_removeFilm;
+uiElement* button_favourites_toDetailsPage;
+uiElement* button_favourites_toggleFavouriteState;
+uiElement* button_favourites_adminRemoveFilm;
 
 uiElement* button_addFilm_toCatalogue;
 uiElement* button_addFilm_ok;
@@ -361,7 +364,7 @@ void drawCatalogue() {
 	button_catalogue_toggleFavouriteState->show(button_catalogue_toggleFavouriteState);
 
 	if (userDatabase[currentUserIndex]->isAdmin) {
-		//button_admin_removeFilm->show(button_admin_removeFilm);
+		button_catalogue_adminRemoveFilm->show(button_catalogue_adminRemoveFilm);
 	}
 	
   button_catalogue_toDetailsPage->focus(button_catalogue_toDetailsPage, &currentView);
@@ -731,34 +734,58 @@ void linkAllElements() {
 	
 	button_catalogue_toDetailsPage = uiInit_button(29, 19, 52, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Подробнее...");
 	button_catalogue_toggleFavouriteState = uiInit_button(29, 22, 52, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Добавить в избранное");
+  button_catalogue_adminRemoveFilm = uiInit_button(59, 27, 75, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT, "Удалить фильм");
+	
 	
 	button_catalogue_toDetailsPage->next = button_catalogue_toggleFavouriteState;
 	button_catalogue_toggleFavouriteState->next = button_catalogue_toDetailsPage;
-	
+  if (userDatabase[currentUserIndex]->isAdmin) {
+  		button_catalogue_adminRemoveFilm->next = button_catalogue_toDetailsPage;
+      button_catalogue_toggleFavouriteState-> next =button_catalogue_adminRemoveFilm;
+  	}
+    
 	button_catalogue_toDetailsPage->previous = button_catalogue_toggleFavouriteState;
 	button_catalogue_toggleFavouriteState->previous = button_catalogue_toDetailsPage;
 
 	button_catalogue_toDetailsPage->onInput = drawDetailedView;
 	button_catalogue_toggleFavouriteState->onInput = toggleFavouriteStateOfCurrentFilm;
+
+  // Избранные //////////////////////////////////////////////////////
 	
-	// IF ADMIN
-	/*
-	button_catalogue_toggleFavouriteState->next = button_admin_removeFilm;
-	button_admin_removeFilm->next = button_admin_addFilm;
-	button_admin_addFilm->next = button_catalogue_toDetailsPage;
+	button_favourites_toDetailsPage = uiInit_button(29, 19, 52, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Подробнее...");
+	button_favourites_toggleFavouriteState = uiInit_button(29, 22, 52, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Добавить в избранное");
+  button_favourites_adminRemoveFilm = uiInit_button(59, 27, 75, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT, "Удалить фильм");
 	
-	button_admin_removeFilm->previous = button_catalogue_toggleFavouriteState;
-	button_admin_addFilm->previous = button_admin_removeFilm;
-	button_catalogue_toDetailsPage->previous = button_admin_addFilm;
-	*/
+	button_favourites_toDetailsPage->next = button_favourites_toggleFavouriteState;
+	button_favourites_toggleFavouriteState->next = button_favourites_toDetailsPage;
+	if (userDatabase[currentUserIndex]->isAdmin) {
+		button_favourites_adminRemoveFilm->next = button_favourites_toDetailsPage;
+    button_favourites_toggleFavouriteState-> next =button_favourites_adminRemoveFilm;
+	}
+  
+	button_favourites_toDetailsPage->previous = button_favourites_toggleFavouriteState;
+	button_favourites_toggleFavouriteState->previous = button_favourites_toDetailsPage;
+
+	button_favourites_toDetailsPage->onInput = drawDetailedView;
+	button_favourites_toggleFavouriteState->onInput = toggleFavouriteStateOfCurrentFilm;
+
+  
+
 	// Детальный просмотр //////////////////////////////////////////////////////
 	
 	button_details_toCatalogue = uiInit_button(29, 19, 52, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT, "Назад");
 	button_details_toggleFavouriteState = uiInit_button(29, 22, 52, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT, "Добавить в избранное");
+  button_details_adminRemoveFilm = uiInit_button(59, 27, 75, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT, "Удалить фильм");
+	
 	
 	button_details_toCatalogue->next = button_details_toggleFavouriteState;
 	button_details_toggleFavouriteState->next = button_details_toCatalogue;
-	
+
+  if (userDatabase[currentUserIndex]->isAdmin) {
+		button_details_adminRemoveFilm->next = button_details_toCatalogue;
+    button_details_toggleFavouriteState-> next =button_details_adminRemoveFilm;
+	}
+  
 	button_details_toCatalogue->previous = button_details_toggleFavouriteState;
 	button_details_toggleFavouriteState->previous = button_details_toCatalogue;
 

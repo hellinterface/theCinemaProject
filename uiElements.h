@@ -176,12 +176,22 @@ void waitForButtonPress(uiElement *element, char** currentView) {
         	drawCatalogue();
 					break;
     		}
+    		else if (*currentView == "ИЗБРАННОЕ") {
+        	currentFilm = currentFilm->next;
+        	drawFavourites();
+					break;
+    		}
       } 
 			else if (c == 'D') {
         // LEFT
     		if (*currentView == "КАТАЛОГ") {
         	currentFilm = currentFilm->previous;
         	drawCatalogue();
+					break;
+    		}
+        else if (*currentView == "ИЗБРАННОЕ") {
+        	currentFilm = currentFilm->previous;
+        	drawFavourites();
 					break;
     		}
       }

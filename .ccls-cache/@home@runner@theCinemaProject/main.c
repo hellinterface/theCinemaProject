@@ -238,6 +238,41 @@ void drawSignUpView() {
 	input_signup_username->focus(input_signup_username, &currentView);
 }
 
+void buttonPress_dialogWindowOk(uiElement *element) {
+	drawHeader(currentView);
+	free(element);
+}
+
+// Функция рисовки диалогового окна
+void drawOverlay_dialogWindow(char *message) {
+	int width = strlenPlus(message)+9;
+	if (width > VIEWPORT_WIDTH/3*2) {
+		width = VIEWPORT_WIDTH/3*2;
+	}
+
+  goToPoint(4, 4);
+
+	int x1 = (VIEWPORT_WIDTH)-width-5;
+	int x2 = (VIEWPORT_WIDTH);
+	int y1 = 0;
+	int y2 = 3;
+	
+	drawRectWithShadow(x1, y1, x2, y2, COLOR_BACKGROUND_DIALOG, COLOR_SHADOW_FRONT, COLOR_BACKGROUND_DIALOG, 0);
+  goToPoint(x1+3, y1+2);
+  //printFm(message, COLOR_BACKGROUND_DIALOG, COLOR_BACKGROUND_APP);
+  printFmLimited(message, VIEWPORT_WIDTH/3*2-9, x1+3, y1+2, COLOR_BACKGROUND_DIALOG, COLOR_BACKGROUND_APP);
+	
+	uiElement* t1 = uiInit_button(x2-5-3, y1+1, x2-3, COLOR_BACKGROUND_DIALOG, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, "OK");
+
+	// is in dialog window -> disable tab
+	
+	t1->next = t1;
+	t1->previous = t1;
+	t1->onInput = buttonPress_dialogWindowOk;
+	t1->show(t1);
+	t1->focus(t1, &currentView);
+}
+
 // Функция рисовки страницы входа
 void drawLogInView() {
 	system("clear");
@@ -334,6 +369,21 @@ void drawCatalogue() {
 
 // Функция рисовки страницы избранного
 void drawFavourites() {
+
+  int found = 1;
+  currentFilm = firstFilm->next;
+  while (currentFilm->isFavourite == 0) {
+    if (firstFilm == currentFilm) {
+      found = 0;
+      break;
+    }  
+    currentFilm = currentFilm->next;
+  }
+
+  if (found == 0) {
+    drawOverlay_dialogWindow("Фильмов в избранном нет");
+  }
+  
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
@@ -355,10 +405,20 @@ void drawFavourites() {
 	
 	drawRectWithShadow(28, 8, 53, 27, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 1);
 
+  film *previousFav = currentFilm->previous;
+  while (previousFav->isFavourite == 0) {
+    previousFav = previousFav->previous;
+  }
+
+  film *nextFav = currentFilm->next;
+  while (nextFav->isFavourite == 0) {
+    nextFav = nextFav->next;
+  }
+  
   goToPoint(5, 12);
-  printBoldLimited((currentFilm->previous)->title, 27-3-4, 5, 12, COLOR_BACKGROUND_BACK, COLOR_TEXT_BACK);
+  printBoldLimited((previousFav)->title, 27-3-4, 5, 12, COLOR_BACKGROUND_BACK, COLOR_TEXT_BACK);
   goToPoint(56, 12);
-  printBoldLimited((currentFilm->next)->title, 27-3-4, 56, 12, COLOR_BACKGROUND_BACK, COLOR_TEXT_BACK);
+  printBoldLimited((nextFav)->title, 27-3-4, 56, 12, COLOR_BACKGROUND_BACK, COLOR_TEXT_BACK);
   
   goToPoint(30, 10);
   printBoldLimited(currentFilm->title, 27-3-4, 30, 10, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
@@ -438,41 +498,6 @@ void drawDetailedView() {
 	button_details_toggleFavouriteState->show(button_details_toggleFavouriteState);
 	
 	button_details_toCatalogue->focus(button_details_toCatalogue, &currentView);
-}
-
-void buttonPress_dialogWindowOk(uiElement *element) {
-	drawHeader(currentView);
-	free(element);
-}
-
-// Функция рисовки диалогового окна
-void drawOverlay_dialogWindow(char *message) {
-	int width = strlenPlus(message)+9;
-	if (width > VIEWPORT_WIDTH/3*2) {
-		width = VIEWPORT_WIDTH/3*2;
-	}
-
-  goToPoint(4, 4);
-
-	int x1 = (VIEWPORT_WIDTH)-width-5;
-	int x2 = (VIEWPORT_WIDTH);
-	int y1 = 0;
-	int y2 = 3;
-	
-	drawRectWithShadow(x1, y1, x2, y2, COLOR_BACKGROUND_DIALOG, COLOR_SHADOW_FRONT, COLOR_BACKGROUND_DIALOG, 0);
-  goToPoint(x1+3, y1+2);
-  //printFm(message, COLOR_BACKGROUND_DIALOG, COLOR_BACKGROUND_APP);
-  printFmLimited(message, VIEWPORT_WIDTH/3*2-9, x1+3, y1+2, COLOR_BACKGROUND_DIALOG, COLOR_BACKGROUND_APP);
-	
-	uiElement* t1 = uiInit_button(x2-5-3, y1+1, x2-3, COLOR_BACKGROUND_DIALOG, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, "OK");
-
-	// is in dialog window -> disable tab
-	
-	t1->next = t1;
-	t1->previous = t1;
-	t1->onInput = buttonPress_dialogWindowOk;
-	t1->show(t1);
-	t1->focus(t1, &currentView);
 }
 
 void buttonPress_login() {
@@ -790,8 +815,10 @@ int main(void) {
 
 	readFavoriteList(currentUserIndex);
 
-  drawCatalogue();
-	
+  //drawCatalogue();
+
+  drawFavourites();
+  
 	return 0;
 	drawLogInView();
 

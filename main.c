@@ -332,7 +332,70 @@ void drawCatalogue() {
   button_catalogue_toDetailsPage->focus(button_catalogue_toDetailsPage, &currentView);
 }
 
-// Функция рисовки страницы входа
+// Функция рисовки страницы избранного
+void drawFavourites() {
+	system("clear");
+  goToPoint(0, 0);
+  fillBackground();
+	previousNavPoint = currentNavPoint;
+	currentNavPoint = navPoint_favourites;
+  currentView = "ИЗБРАННОЕ";
+	drawHeader("ИЗБРАННОЕ");
+	
+	navPoints_normalMode();
+
+  drawRectWithShadow(3, 10, 27, 25, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK, 1);
+	drawRectWithShadow(54, 10, 78, 25, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK, 1);
+
+	drawRectWithShadow(5, 19, 25, 20, COLOR_SHADOW_BACK, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, 0);
+	drawRectWithShadow(5, 22, 25, 23, COLOR_SHADOW_BACK, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, 0);
+	
+	drawRectWithShadow(56, 19, 75, 20, COLOR_SHADOW_BACK, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, 0);
+	drawRectWithShadow(56, 22, 75, 23, COLOR_SHADOW_BACK, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, 0);
+	
+	drawRectWithShadow(28, 8, 53, 27, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 1);
+
+  goToPoint(5, 12);
+  printBoldLimited((currentFilm->previous)->title, 27-3-4, 5, 12, COLOR_BACKGROUND_BACK, COLOR_TEXT_BACK);
+  goToPoint(56, 12);
+  printBoldLimited((currentFilm->next)->title, 27-3-4, 56, 12, COLOR_BACKGROUND_BACK, COLOR_TEXT_BACK);
+  
+  goToPoint(30, 10);
+  printBoldLimited(currentFilm->title, 27-3-4, 30, 10, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+  goToPoint(28, 13);
+  printFor("━", 53-28+1, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP);
+	
+	char ratingString[4];
+	snprintf(ratingString, 4, "%f", currentFilm->rating);
+	
+  goToPoint(35, 15);
+  printFm("Рейтинг: ", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+  printFm(ratingString, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
+  goToPoint(31, 16);
+	int ratingWhole = floor(currentFilm->rating);
+  printFor("★ ", ratingWhole, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP);
+  printFor("☆ ", 10-ratingWhole, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP);
+	
+
+	char* text = "Убрать из избранного";
+	if (currentFilm->isFavourite == 0) {
+		text = "Добавить в избранное";
+	}
+	int textLength = strlenPlus(text);
+	button_catalogue_toggleFavouriteState->value = text;
+	button_catalogue_toggleFavouriteState->length = textLength;
+	
+	button_catalogue_toDetailsPage->show(button_catalogue_toDetailsPage);
+	button_catalogue_toggleFavouriteState->show(button_catalogue_toggleFavouriteState);
+
+	if (userDatabase[currentUserIndex]->isAdmin) {
+		//button_admin_removeFilm->show(button_admin_removeFilm);
+	}
+	
+  button_catalogue_toDetailsPage->focus(button_catalogue_toDetailsPage, &currentView);
+}
+
+// Функция рисовки страницы детального просмотра
 void drawDetailedView() {
 	system("clear");
   goToPoint(0, 0);
@@ -347,21 +410,21 @@ void drawDetailedView() {
 	char ratingString[4];
 	snprintf(ratingString, 4, "%f", currentFilm->rating);
 	
-  goToPoint(4, 4);
-  printFm("Название фильма: ", COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
-  printFm(currentFilm->title, COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
-
   goToPoint(4, 6);
-  printFm("Рейтинг: ", COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
-  printFm(ratingString, COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
-	
+  printFm("Название фильма: ", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
+  printFm(currentFilm->title, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
+
   goToPoint(4, 8);
-  printFm("Страна: ", COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
-  printFm(currentFilm->country, COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
+  printFm("Рейтинг: ", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
+  printFm(ratingString, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
 	
   goToPoint(4, 10);
-  printFm("Жанры: ", COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
-  printFm(currentFilm->genre, COLOR_BACKGROUND_APP, COLOR_TEXT_BACK);
+  printFm("Страна: ", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
+  printFm(currentFilm->country, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
+	
+  goToPoint(4, 12);
+  printFm("Жанры: ", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
+  printFm(currentFilm->genre, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
 
 	char* text = "Убрать из избранного";
 	if (currentFilm->isFavourite == 0) {
@@ -665,8 +728,8 @@ void linkAllElements() {
 	*/
 	// Детальный просмотр //////////////////////////////////////////////////////
 	
-	button_details_toCatalogue = uiInit_button(29, 19, 52, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Назад");
-	button_details_toggleFavouriteState = uiInit_button(29, 22, 52, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Добавить в избранное");
+	button_details_toCatalogue = uiInit_button(29, 19, 52, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT, "Назад");
+	button_details_toggleFavouriteState = uiInit_button(29, 22, 52, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT, "Добавить в избранное");
 	
 	button_details_toCatalogue->next = button_details_toggleFavouriteState;
 	button_details_toggleFavouriteState->next = button_details_toCatalogue;

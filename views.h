@@ -13,6 +13,15 @@
 #define COLOR_SHADOW_FRONT "60;40;120"
 #define COLOR_SHADOW_BACK "33;26;66"
 
+void onLogIn();
+void logOff();
+void resetAllTextInputsBesidesCurrent();
+void drawAddFilmView();
+void appExit();
+void drawLogInView();
+void drawSignUpView();
+void drawSettings();
+void drawDetailedView();
 void drawFavourites();
 void enterHeaderSwitcher();
 void toggleFavouriteStateOfCurrentFilm();

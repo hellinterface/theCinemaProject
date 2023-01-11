@@ -2,10 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 
+// "Импорт" переменных из main.c
 extern film *currentFilm;
+extern navPoint *currentNavPoint;
 
+// Структура интерактивного элемента интерфейса (текстовое поле/кнопка)
 typedef struct uiElement {
 	int x1; // X-координата слева
 	int y; // Y-координата сверху
@@ -19,29 +21,24 @@ typedef struct uiElement {
 	int asciilim_high; // Текстовое поле: максимальнйы ASCII-код вводимых символов
 	int length; // 
 	char* value; // Текст в элементе
-	void (*focus)(struct uiElement *self, char **currentView); // Функция, которая выделяет данный элемент как активный и ждёт ввода
+	void (*focus)(struct uiElement *self); // Функция, которая выделяет данный элемент как активный и ждёт ввода
 	void (*show)(struct uiElement *self); // Функция, которая рисует элемент (в нормальном состоянии) на экране
-	void (*onInput)(); // struct uiElement *self, char **currentView
-	void (*onBlur)(struct uiElement *self, char **currentView);
+	void (*onInput)();
 	char* (*getValue)(struct uiElement *self);
+	char* (*resetValue)(struct uiElement *self);
 	struct uiElement* next;
 	struct uiElement* previous;
 } uiElement;
 
-
-/*
-void chain(int n, uiListElement a, ...) {
-   va_list valist;
-   va_start(valist, n);
-   for (i = 0; i < num; i++) {
-      sum += va_arg(valist, int);
-   }
-   va_end(valist);
+void* resetValueOfElement(uiElement *element) {
+  for (int i = 0; i < element->limit_high; i++) {
+    element->value[i] = ' ';
+  }
+  element->value[0] = '\0';
+	element->length = 0;
 }
-*/
 
-
-char* readText(uiElement *element, char** currentView) {
+char* uiTextInput_onFocus(uiElement *element) {
 	int x = element->x1+2;
 	int y = element->y+1;
 	int broken = 0;
@@ -105,20 +102,8 @@ char* readText(uiElement *element, char** currentView) {
 				break;
       } 
 			else if (c == 'C') {
-        // RIGHT
-    		if (*currentView == "КАТАЛОГ") {
-        	currentFilm = currentFilm->next;
-        	drawCatalogue();
-					break;
-    		}
       } 
 			else if (c == 'D') {
-        // LEFT
-    		if (*currentView == "КАТАЛОГ") {
-        	currentFilm = currentFilm->previous;
-        	drawCatalogue();
-					break;
-    		}
       }
     }
     // printf("%i %c / ", c, c);
@@ -128,13 +113,13 @@ char* readText(uiElement *element, char** currentView) {
   		goToPoint(x+element->length, y);
   		printFm(" ", element->color_fill, element->color_text);
 		}
-		broken_elementToSwitchTo->focus(broken_elementToSwitchTo, currentView);
+		broken_elementToSwitchTo->focus(broken_elementToSwitchTo);
 	}
 	//strcpy(target, str);
 	return element->value;
 }
 
-void waitForButtonPress(uiElement *element, char** currentView) {
+void uiButton_onFocus(uiElement *element) {
 	int x = element->x1+2;
 	int y = element->y+1;
 	int broken = 0;
@@ -171,12 +156,12 @@ void waitForButtonPress(uiElement *element, char** currentView) {
       } 
 			else if (c == 'C') {
         // RIGHT
-    		if (*currentView == "КАТАЛОГ") {
+    		if (currentNavPoint->title == "КАТАЛОГ") {
         	currentFilm = currentFilm->next;
         	drawCatalogue();
 					break;
     		}
-    		else if (*currentView == "ИЗБРАННОЕ") {
+    		else if (currentNavPoint->title== "ИЗБРАННОЕ") {
         	currentFilm = currentFilm->next;
         	drawFavourites();
 					break;
@@ -184,12 +169,12 @@ void waitForButtonPress(uiElement *element, char** currentView) {
       } 
 			else if (c == 'D') {
         // LEFT
-    		if (*currentView == "КАТАЛОГ") {
+    		if (currentNavPoint->title == "КАТАЛОГ") {
         	currentFilm = currentFilm->previous;
         	drawCatalogue();
 					break;
     		}
-        else if (*currentView == "ИЗБРАННОЕ") {
+        else if (currentNavPoint->title == "ИЗБРАННОЕ") {
         	currentFilm = currentFilm->previous;
         	drawFavourites();
 					break;
@@ -201,7 +186,7 @@ void waitForButtonPress(uiElement *element, char** currentView) {
 		drawInputBox(element->x1, element->y, element->x2, element->color_bg, element->color_fill);
 		goToPoint(x, y);
 		printFm(element->value, element->color_fill, element->color_text);
-		broken_elementToSwitchTo->focus(broken_elementToSwitchTo, currentView);
+		broken_elementToSwitchTo->focus(broken_elementToSwitchTo);
 	}
 }
 
@@ -243,12 +228,11 @@ uiElement* uiInit_textInput(int x1, int y, int x2, char* color_bg, char* color_f
 	element->asciilim_high = asciilim_high;
 	element->length = 0;
   element->value = (char *)malloc(element->limit_high);
-  for (int i = 0; i < element->limit_high; i++) {
-    element->value[i] = ' ';
-  }
-	element->focus = readText;
+	element->resetValue = resetValueOfElement;
+	element->focus = uiTextInput_onFocus;
 	element->show = showTextInput;
 	element->getValue = getValue;
+	element->resetValue(element);
 	return element;
 }
 
@@ -261,7 +245,7 @@ uiElement* uiInit_button(int x1, int y, int x2, char* color_bg, char* color_fill
 	element->color_text = color_text;
 	element->value = value;
 	element->length = (int)strlen(value) / 2 - 1;
-	element->focus = waitForButtonPress;
+	element->focus = uiButton_onFocus;
 	element->show = showButton;
   if (x2 > element->length+4) {
     element->x2 = x2;

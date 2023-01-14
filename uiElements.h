@@ -6,6 +6,7 @@
 // "Импорт" переменных из main.c
 extern film *currentFilm;
 extern navPoint *currentNavPoint;
+extern int isDialogWindowVisible;
 
 // Структура интерактивного элемента интерфейса (текстовое поле/кнопка)
 typedef struct uiElement {
@@ -30,6 +31,9 @@ typedef struct uiElement {
 	struct uiElement* previous;
 } uiElement;
 
+extern uiElement* currentUIElement;
+extern uiElement* previousUIElement;
+
 void* resetValueOfElement(uiElement *element) {
   for (int i = 0; i < element->limit_high; i++) {
     element->value[i] = ' ';
@@ -44,6 +48,9 @@ char* uiTextInput_onFocus(uiElement *element) {
 	int broken = 0;
 	uiElement *broken_elementToSwitchTo = NULL;
 	char c = '1';
+  
+  previousUIElement = currentUIElement;
+  currentUIElement = element;
 	
   goToPoint(x, y);
   printFm(element->value, element->color_fill, element->color_text);
@@ -125,6 +132,10 @@ void uiButton_onFocus(uiElement *element) {
 	int broken = 0;
 	uiElement *broken_elementToSwitchTo = NULL;
 	char c = '1';
+
+  previousUIElement = currentUIElement;
+  currentUIElement = element;
+  
 	drawInputBox(element->x1, element->y, element->x2, element->color_bg, COLOR_BACKGROUND_HIGHLIGHT);
 	goToPoint(x, y);
 	printBold(element->value, COLOR_BACKGROUND_HIGHLIGHT, COLOR_BACKGROUND_APP);
@@ -136,8 +147,10 @@ void uiButton_onFocus(uiElement *element) {
 			break;
     }
 		else if (c == 9) { // Tab
-			enterHeaderSwitcher();
-			break;
+      if (isDialogWindowVisible == 1) {
+			 enterHeaderSwitcher();
+			 break;
+      } 
 		}
     else if (c == 27) {
       c = getch();

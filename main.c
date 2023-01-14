@@ -47,6 +47,11 @@ uiElement* button_settings_toSignUpPage;
 uiElement* button_addFilm_toCatalogue;
 uiElement* button_addFilm_ok;
 
+uiElement* button_dialogWindow_ok;
+
+uiElement* currentUIElement;
+uiElement* previousUIElement;
+
 // Точки навигации
 navPoint* navPoint_catalogue;
 navPoint* navPoint_favourites;
@@ -61,6 +66,7 @@ navPoint* navPoint_addFilm;
 navPoint* currentNavPoint;
 navPoint* previousNavPoint;
 navPoint* headerSwitcher_selectedNavPoint;
+int isDialogWindowVisible = 0;
 
 // Функция инициализации точек навигации
 void initNavPoints() {
@@ -225,6 +231,7 @@ void drawSignUpView() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
+  isDialogWindowVisible = 0;
 	previousNavPoint = currentNavPoint;
 	currentNavPoint = navPoint_signUp;
 	if (currentUserIndex == -1) {
@@ -240,7 +247,7 @@ void drawSignUpView() {
 	drawRectWithShadow(0, 14, VIEWPORT_WIDTH-1, 20, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK, 0);
 	
 	drawRectWithShadow(48, 8, 75, 26, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 1);
-	
+
   goToPoint(54, 9);
   printBold("Имя пользователя", COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
   goToPoint(54, 14);
@@ -258,9 +265,10 @@ void drawSignUpView() {
 }
 
 // Функция, выполняемая при нажатии на кнопку "ОК" диалогового окна
-void buttonPress_dialogWindowOk(uiElement *element) {
+void buttonPress_dialogWindowOk_reject() {
 	drawHeader(currentNavPoint->title);
-	free(element);
+  isDialogWindowVisible = 0;
+  previousUIElement->focus(previousUIElement);
 }
 
 // Функция рисовки диалогового окна в углу экрана
@@ -281,17 +289,13 @@ void drawOverlay_dialogWindow(char *message) {
   goToPoint(x1+3, y1+2);
   //printFm(message, COLOR_BACKGROUND_DIALOG, COLOR_BACKGROUND_APP);
   printFmLimited(message, VIEWPORT_WIDTH/3*2-9, x1+3, y1+2, COLOR_BACKGROUND_DIALOG, COLOR_BACKGROUND_APP);
-	
-	uiElement* t1 = uiInit_button(x2-5-3, y1+1, x2-3, COLOR_BACKGROUND_DIALOG, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, "OK");
 
-	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	// is in dialog window -> disable tab
-	
-	t1->next = t1;
-	t1->previous = t1;
-	t1->onInput = buttonPress_dialogWindowOk;
-	t1->show(t1);
-	t1->focus(t1);
+  isDialogWindowVisible = 1;
+	button_dialogWindow_ok->next = button_dialogWindow_ok;
+	button_dialogWindow_ok->previous = button_dialogWindow_ok;
+	button_dialogWindow_ok->onInput = buttonPress_dialogWindowOk_reject;
+	button_dialogWindow_ok->show(button_dialogWindow_ok);
+	button_dialogWindow_ok->focus(button_dialogWindow_ok);
 }
 
 // Функция рисовки страницы входа
@@ -299,6 +303,7 @@ void drawLogInView() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
+  isDialogWindowVisible = 0;
 	previousNavPoint = navPoint_logIn;
 	currentNavPoint = navPoint_logIn;
 	if (currentUserIndex == -1) {
@@ -333,6 +338,7 @@ void drawCatalogue() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
+  isDialogWindowVisible = 0;
 	previousNavPoint = currentNavPoint;
 	currentNavPoint = navPoint_catalogue;
 	drawHeader(currentNavPoint->title);
@@ -416,6 +422,7 @@ void drawFavourites() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
+  isDialogWindowVisible = 0;
 	previousNavPoint = currentNavPoint;
 	currentNavPoint = navPoint_favourites;
 	drawHeader(currentNavPoint->title);
@@ -487,6 +494,7 @@ void drawDetailedView() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
+  isDialogWindowVisible = 0;
 	previousNavPoint = currentNavPoint;
 	currentNavPoint = navPoint_details;
 	drawHeader(currentNavPoint->title);
@@ -536,6 +544,7 @@ void drawAddFilmView() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
+  isDialogWindowVisible = 0;
 	previousNavPoint = currentNavPoint;
 	currentNavPoint = navPoint_details;
 	drawHeader(currentNavPoint->title);
@@ -578,6 +587,7 @@ void drawSettings() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
+  isDialogWindowVisible = 0;
 	previousNavPoint = currentNavPoint;
 	currentNavPoint = navPoint_details;
 	drawHeader(currentNavPoint->title);
@@ -660,12 +670,15 @@ void buttonPress_signup_createUser() {
 	
 
 	if (passcheck_hasUppercase == 0) {
+    button_dialogWindow_ok->onInput = buttonPress_dialogWindowOk_reject;
 		drawOverlay_dialogWindow("В пароле нет букв в верхнем регистре.");
 	}
 	else if (passcheck_hasLowercase == 0) {
+    button_dialogWindow_ok->onInput = buttonPress_dialogWindowOk_reject;
 		drawOverlay_dialogWindow("В пароле нет букв в нижнем регистре.");
 	}
 	else if (passcheck_hasNumbers == 0) {
+    button_dialogWindow_ok->onInput = buttonPress_dialogWindowOk_reject;
 		drawOverlay_dialogWindow("В пароле нет цифр.");
 	}
 	else {
@@ -679,9 +692,8 @@ void buttonPress_signup_createUser() {
 		fclose(fout_users);
 		currentUserIndex = totalUsers;
 		totalUsers++;
+    button_dialogWindow_ok->onInput = onLogIn;
 		drawOverlay_dialogWindow("Аккаунт создан.");
-		onLogIn();
-		navPoint_catalogue->switchTo(navPoint_catalogue);
 	}
 	
 
@@ -815,7 +827,6 @@ void resetAllTextInputsBesidesCurrent() {
 
 void initAllElements() {
 	// Вход //////////////////////////////////////////////////
-	
 	input_login_username = uiInit_textInput(50, 10, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
 	input_login_password = uiInit_textInput(50, 15, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
 	button_login_ok = uiInit_button(50, 19, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Войти");
@@ -851,7 +862,9 @@ button_catalogue_toDetailsPage = uiInit_button(29, 19, 52, COLOR_BACKGROUND_FRON
 	button_details_toggleFavouriteState->onInput = toggleFavouriteStateOfCurrentFilm;
 	
 	// Вход //////////////////////////////////////////////////
-	// Вход //////////////////////////////////////////////////
+  
+	// Диалоговое окно //////////////////////////////////////////////////
+	button_dialogWindow_ok = uiInit_button(VIEWPORT_WIDTH-5-3, 1, VIEWPORT_WIDTH-3, COLOR_BACKGROUND_DIALOG, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, "OK");
 }
 
 void linkLogInSignUpElements() {
@@ -941,6 +954,7 @@ void onLogIn() {
 	readFavoriteList(currentUserIndex);
 	linkMainUIElements();
 	navPoint_logIn->title = "ВЫЙТИ ИЗ АККАУНТА";
+	navPoint_catalogue->switchTo(navPoint_catalogue);
 }
 
 void logOff() {

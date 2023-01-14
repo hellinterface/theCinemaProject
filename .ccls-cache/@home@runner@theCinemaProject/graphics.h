@@ -3,18 +3,6 @@
 #include <stdlib.h>
 //#include <wchar.h>
 
-#define VIEWPORT_WIDTH 80
-#define VIEWPORT_HEIGHT 30
-
-#define COLOR_BACKGROUND_HIGHLIGHT "160;140;240"
-#define COLOR_BACKGROUND_FRONT "120;100;200"
-#define COLOR_BACKGROUND_BACK "64;51;117"
-#define COLOR_BACKGROUND_APP "20;0;40"
-#define COLOR_TEXT_BACK "10;10;30"
-#define COLOR_TEXT_FRONT "255;255;255"
-#define COLOR_SHADOW_FRONT "60;40;120"
-#define COLOR_SHADOW_BACK "33;26;66"
-
 void goToPoint(int x, int y) { printf("\e[%d;%dH", (y), (x)); }
 
 void fillLine(char *color_bg) {

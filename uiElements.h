@@ -3,9 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Обработка нажатия клавиш стрелок на клавиатуре:
+// https://stackoverflow.com/questions/10463201/getch-and-arrow-codes
+
 // "Импорт" переменных из main.c
 extern film *currentFilm;
 extern navPoint *currentNavPoint;
+extern int dialogWindowVisible;
 
 // Структура интерактивного элемента интерфейса (текстовое поле/кнопка)
 typedef struct uiElement {
@@ -25,19 +29,20 @@ typedef struct uiElement {
 	void (*show)(struct uiElement *self); // Функция, которая рисует элемент (в нормальном состоянии) на экране
 	void (*onInput)();
 	char* (*getValue)(struct uiElement *self);
+  char* (*setValue)(struct uiElement* self, char* value);
 	char* (*resetValue)(struct uiElement *self);
 	struct uiElement* next;
 	struct uiElement* previous;
 } uiElement;
 
+// Очистить значение элемента.
 void* resetValueOfElement(uiElement *element) {
-  for (int i = 0; i < element->limit_high; i++) {
-    element->value[i] = ' ';
-  }
   element->value[0] = '\0';
 	element->length = 0;
 }
 
+// Сделать данное текстовое поле активным элементом.
+// Отвечает за обработку событий клавиатуры.
 char* uiTextInput_onFocus(uiElement *element) {
 	int x = element->x1+2;
 	int y = element->y+1;
@@ -53,12 +58,14 @@ char* uiTextInput_onFocus(uiElement *element) {
 	}
 		
   while (1 == 1) {
+    goToPoint(0, VIEWPORT_HEIGHT+1);
     c = getch();
     // printf("%i %c / ", c, c);
 		if (element->length < element->limit_high) {
 	    if (c >= element->asciilim_low && c <= element->asciilim_high) {
 	      element->value[element->length] = c;
 	      element->length++;
+				drawRect(x, y, x+element->limit_high, y, element->color_fill);
       	goToPoint(x, y);
       	printFm(element->value, element->color_fill, element->color_text);
 				if (element->length < element->limit_high) {
@@ -68,8 +75,9 @@ char* uiTextInput_onFocus(uiElement *element) {
 	    }
 		}
 	  if (c == 127) { // Backspace
-	    element->value[element->length - 1] = ' ';
+	    element->value[element->length - 1] = '\0';
 	    element->length--;
+			drawRect(x, y, x+element->limit_high, y, element->color_fill);
       goToPoint(x, y);
       printFm(element->value, element->color_fill, element->color_text);
       goToPoint(x+element->length, y);
@@ -119,6 +127,8 @@ char* uiTextInput_onFocus(uiElement *element) {
 	return element->value;
 }
 
+// Сделать данную кнопку активным элементом.
+// Отвечает за обработку событий клавиатуры.
 void uiButton_onFocus(uiElement *element) {
 	int x = element->x1+2;
 	int y = element->y+1;
@@ -129,15 +139,17 @@ void uiButton_onFocus(uiElement *element) {
 	goToPoint(x, y);
 	printBold(element->value, COLOR_BACKGROUND_HIGHLIGHT, COLOR_BACKGROUND_APP);
   while (1 == 1) {
+    goToPoint(0, VIEWPORT_HEIGHT+1);
     c = getch();
 		if (c == 10) { // Enter
-			// do an action...
 			element->onInput();
 			break;
     }
 		else if (c == 9) { // Tab
-			enterHeaderSwitcher();
-			break;
+			if (dialogWindowVisible == 0) {
+				enterHeaderSwitcher();
+				break;
+			}
 		}
     else if (c == 27) {
       c = getch();
@@ -190,30 +202,32 @@ void uiButton_onFocus(uiElement *element) {
 	}
 }
 
+// Функция, рисующая данное текстовое поле.
 void showTextInput(uiElement* element) {
 	drawInputBox(element->x1, element->y, element->x2, element->color_bg, element->color_fill);
+  goToPoint(element->x1+2, element->y+1);
+  printFm(element->value, element->color_fill, element->color_text);
 }
+
+// Функция, рисующая данную кнопку.
 void showButton(uiElement* element) {
 	drawInputBox(element->x1, element->y, element->x2, element->color_bg, element->color_fill);
 	goToPoint(element->x1+2, element->y+1);
 	printFm(element->value, element->color_fill, COLOR_TEXT_FRONT);
 }
 
+// Функция, возвращающая значение элемента.
 char* getValue(uiElement* element) {
-	int position = strlenPlus(element->value)-1;
-  for (int i = position; i >= 0; i--) {
-    if (element->value[i] != ' ') break;
-		position--;
-  }
-	position++;
-  char *returnValue = (char*)malloc(position+1);
-  for (int i = 0; i < position; i++) {
-    returnValue[i] = element->value[i];
-  }
-	returnValue[position] = '\0';
-	return returnValue;
+	return element->value;
 }
 
+// Функция, изменяющая значение элемента на нужное.
+void setValue(uiElement* element, char* value) {
+	strcpy(element->value, value);
+	element->length = strlenPlus(element->value);
+}
+
+// Функция, создающая элемент "Текстовое поле" для дальнйшей работы.
 uiElement* uiInit_textInput(int x1, int y, int x2, char* color_bg, char* color_fill, char* color_text, int limit_low, int limit_high, int asciilim_low, int asciilim_high) {
 	uiElement *element = (uiElement*)malloc(sizeof(uiElement));
 	element->x1 = x1;
@@ -227,8 +241,9 @@ uiElement* uiInit_textInput(int x1, int y, int x2, char* color_bg, char* color_f
 	element->asciilim_low = asciilim_low;
 	element->asciilim_high = asciilim_high;
 	element->length = 0;
-  element->value = (char *)malloc(element->limit_high);
+  element->value = (char*)malloc(element->limit_high);
 	element->resetValue = resetValueOfElement;
+	element->setValue = setValue;
 	element->focus = uiTextInput_onFocus;
 	element->show = showTextInput;
 	element->getValue = getValue;
@@ -236,6 +251,7 @@ uiElement* uiInit_textInput(int x1, int y, int x2, char* color_bg, char* color_f
 	return element;
 }
 
+// Функция, создающая элемент "Кнопка" для дальнйшей работы.
 uiElement* uiInit_button(int x1, int y, int x2, char* color_bg, char* color_fill, char* color_text, char* value) {
 	uiElement *element = (uiElement*)malloc(sizeof(uiElement));
 	element->x1 = x1;
@@ -244,7 +260,7 @@ uiElement* uiInit_button(int x1, int y, int x2, char* color_bg, char* color_fill
 	element->color_fill = color_fill;
 	element->color_text = color_text;
 	element->value = value;
-	element->length = (int)strlen(value) / 2 - 1;
+	element->length = strlenPlus(value);
 	element->focus = uiButton_onFocus;
 	element->show = showButton;
   if (x2 > element->length+4) {

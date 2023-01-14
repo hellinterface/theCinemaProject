@@ -1,5 +1,4 @@
-#include "types.h"
-#include "views.h"
+#include "global.h"
 #include "graphics.h"
 #include "termiosWrapper.h"
 #include "uiElements.h"
@@ -7,13 +6,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <locale.h>
 
 film* currentFilm = NULL;
 film* firstFilm = NULL;
 
 user* userDatabase[64];
-int currentUserIndex = -1; // -1 - пользователь не выбран
+int currentUserID = -1; // -1 - пользователь не выбран
 int totalUsers;
+int dialogWindowVisible = 0;
 
 // Элементы: страница входа в аккаунт
 uiElement* input_login_username;
@@ -40,11 +41,14 @@ uiElement* button_details_adminRemoveFilm;
 
 // Элементы: страница настроек
 uiElement* button_settings_goBack;
+uiElement* button_settings_clearFavourites;
 uiElement* button_settings_toSignUpPage;
 
 // Элементы: страница добавления фильма
 uiElement* button_addFilm_toCatalogue;
 uiElement* button_addFilm_ok;
+
+uiElement* button_dialogWindow_OK;
 
 // Точки навигации
 navPoint* navPoint_catalogue;
@@ -107,7 +111,7 @@ void navPoints_normalMode() {
 	navPoint_logIn->previous = navPoint_settings;
 	navPoint_exit->previous = navPoint_logIn;
 	
-	if (userDatabase[currentUserIndex]->isAdmin == 1) {
+	if (userDatabase[currentUserID]->isAdmin == 1) {
 		navPoint_exit->next = navPoint_addFilm;
 		navPoint_addFilm->next = navPoint_catalogue;
 		
@@ -169,9 +173,9 @@ void drawHeader(char *title) {
 	drawRectWithShadow(0, 0, VIEWPORT_WIDTH-1, 3, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_SHADOW_FRONT, 0);
   goToPoint(6, 2);
   printBold(title, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
-	if (currentUserIndex != -1) {
+	if (currentUserID != -1) {
 		char username[21];
-		strcpy(username, userDatabase[currentUserIndex]->name);
+		strcpy(username, userDatabase[currentUserID]->name);
   	goToPoint(VIEWPORT_WIDTH-4-strlen(username), 2);
   	printFm(username, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT);
 	}
@@ -224,9 +228,12 @@ void drawSignUpView() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
-	previousNavPoint = currentNavPoint;
-	currentNavPoint = navPoint_signUp;
-	if (currentUserIndex == -1) {
+	dialogWindowVisible = 0;
+	if (currentNavPoint != navPoint_signUp) {
+		previousNavPoint = currentNavPoint;
+		currentNavPoint = navPoint_signUp;
+	}
+	if (currentUserID == -1) {
 		navPoint_exit->next = currentNavPoint;
 		navPoint_exit->previous = currentNavPoint;
 	}
@@ -259,7 +266,7 @@ void drawSignUpView() {
 // Функция, выполняемая при нажатии на кнопку "ОК" диалогового окна
 void buttonPress_dialogWindowOk(uiElement *element) {
 	drawHeader(currentNavPoint->title);
-	free(element);
+	currentNavPoint->switchTo(currentNavPoint);
 }
 
 // Функция рисовки диалогового окна в углу экрана
@@ -280,17 +287,11 @@ void drawOverlay_dialogWindow(char *message) {
   goToPoint(x1+3, y1+2);
   //printFm(message, COLOR_BACKGROUND_DIALOG, COLOR_BACKGROUND_APP);
   printFmLimited(message, VIEWPORT_WIDTH/3*2-9, x1+3, y1+2, COLOR_BACKGROUND_DIALOG, COLOR_BACKGROUND_APP);
-	
-	uiElement* t1 = uiInit_button(x2-5-3, y1+1, x2-3, COLOR_BACKGROUND_DIALOG, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, "OK");
 
-	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	// is in dialog window -> disable tab
+	dialogWindowVisible = 1;
 	
-	t1->next = t1;
-	t1->previous = t1;
-	t1->onInput = buttonPress_dialogWindowOk;
-	t1->show(t1);
-	t1->focus(t1);
+	button_dialogWindow_OK->show(button_dialogWindow_OK);
+	button_dialogWindow_OK->focus(button_dialogWindow_OK);
 }
 
 // Функция рисовки страницы входа
@@ -298,11 +299,10 @@ void drawLogInView() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
-	previousNavPoint = navPoint_logIn;
-	currentNavPoint = navPoint_logIn;
-	if (currentUserIndex == -1) {
-		navPoint_exit->next = currentNavPoint;
-		navPoint_exit->previous = currentNavPoint;
+	dialogWindowVisible = 0;
+	if (currentNavPoint != navPoint_logIn) {
+		previousNavPoint = currentNavPoint;
+		currentNavPoint = navPoint_logIn;
 	}
 	drawHeader(currentNavPoint->title);
 	resetAllTextInputsBesidesCurrent();
@@ -332,11 +332,12 @@ void drawCatalogue() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
-	previousNavPoint = currentNavPoint;
-	currentNavPoint = navPoint_catalogue;
+	dialogWindowVisible = 0;
+	if (currentNavPoint != navPoint_catalogue) {
+		previousNavPoint = currentNavPoint;
+		currentNavPoint = navPoint_catalogue;
+	}
 	drawHeader(currentNavPoint->title);
-	
-	navPoints_normalMode();
 
   drawRectWithShadow(3, 10, 27, 25, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK, 1);
 	drawRectWithShadow(54, 10, 78, 25, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK, 1);
@@ -387,7 +388,7 @@ void drawCatalogue() {
 	button_catalogue_toDetailsPage->show(button_catalogue_toDetailsPage);
 	button_catalogue_toggleFavouriteState->show(button_catalogue_toggleFavouriteState);
 
-	if (userDatabase[currentUserIndex]->isAdmin) {
+	if (userDatabase[currentUserID]->isAdmin) {
 		button_catalogue_adminRemoveFilm->show(button_catalogue_adminRemoveFilm);
 	}
 	
@@ -415,11 +416,12 @@ void drawFavourites() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
-	previousNavPoint = currentNavPoint;
-	currentNavPoint = navPoint_favourites;
+	dialogWindowVisible = 0;
+	if (currentNavPoint != navPoint_favourites) {
+		previousNavPoint = currentNavPoint;
+		currentNavPoint = navPoint_favourites;
+	}
 	drawHeader(currentNavPoint->title);
-	
-	navPoints_normalMode();
 
   drawRectWithShadow(3, 10, 27, 25, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK, 1);
 	drawRectWithShadow(54, 10, 78, 25, COLOR_BACKGROUND_BACK, COLOR_BACKGROUND_APP, COLOR_SHADOW_BACK, 1);
@@ -474,7 +476,7 @@ void drawFavourites() {
 	button_catalogue_toDetailsPage->show(button_catalogue_toDetailsPage);
 	button_catalogue_toggleFavouriteState->show(button_catalogue_toggleFavouriteState);
 
-	if (userDatabase[currentUserIndex]->isAdmin) {
+	if (userDatabase[currentUserID]->isAdmin) {
 		button_catalogue_adminRemoveFilm->show(button_catalogue_adminRemoveFilm);
 	}
 	
@@ -486,11 +488,12 @@ void drawDetailedView() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
-	previousNavPoint = currentNavPoint;
-	currentNavPoint = navPoint_details;
+	dialogWindowVisible = 0;
+	if (currentNavPoint != navPoint_details) {
+		previousNavPoint = currentNavPoint;
+		currentNavPoint = navPoint_details;
+	}
 	drawHeader(currentNavPoint->title);
-
-	navPoints_normalMode();
 
 	char ratingString[4];
 	snprintf(ratingString, 4, "%f", currentFilm->rating);
@@ -522,7 +525,7 @@ void drawDetailedView() {
 	button_details_toCatalogue->show(button_details_toCatalogue);
 	button_details_toggleFavouriteState->show(button_details_toggleFavouriteState);
 	
-	if (userDatabase[currentUserIndex]->isAdmin) {
+	if (userDatabase[currentUserID]->isAdmin) {
 		button_details_adminRemoveFilm->show(button_details_adminRemoveFilm);
 	}
 	
@@ -535,11 +538,12 @@ void drawAddFilmView() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
-	previousNavPoint = currentNavPoint;
-	currentNavPoint = navPoint_details;
+	dialogWindowVisible = 0;
+	if (currentNavPoint != navPoint_addFilm) {
+		previousNavPoint = currentNavPoint;
+		currentNavPoint = navPoint_addFilm;
+	}
 	drawHeader(currentNavPoint->title);
-
-	navPoints_normalMode();
 	
   goToPoint(4, 6);
   printFm("Название фильма: ", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
@@ -577,11 +581,12 @@ void drawSettings() {
 	system("clear");
   goToPoint(0, 0);
   fillBackground();
-	previousNavPoint = currentNavPoint;
-	currentNavPoint = navPoint_details;
+	dialogWindowVisible = 0;
+	if (currentNavPoint != navPoint_settings) {
+		previousNavPoint = currentNavPoint;
+		currentNavPoint = navPoint_settings;
+	}
 	drawHeader(currentNavPoint->title);
-
-	navPoints_normalMode();
 	
   goToPoint(4, 6);
   printFm("Имя пользователя: ", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
@@ -599,9 +604,11 @@ void drawSettings() {
   printFm("Фильмов в списке избранного: ", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
   printFm("123", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
 
-	button_details_toCatalogue->show(button_details_toCatalogue);
+	button_settings_toSignUpPage->show(button_settings_toSignUpPage);
+	button_settings_clearFavourites->show(button_settings_clearFavourites);
+	button_settings_goBack->show(button_settings_goBack);
 	
-	button_details_toCatalogue->focus(button_details_toCatalogue);
+	button_settings_goBack->focus(button_settings_goBack);
 }
 
 // Функция, выполняемая при нажатии на кнопку "Войти"
@@ -614,7 +621,7 @@ void buttonPress_login() {
 	while (userDatabase[i] != NULL) {
 		if (strcmp(userDatabase[i]->name, inputValue_name) == 0) {
 			found = i;
-			currentUserIndex = i;
+			currentUserID = i;
 			if (strcmp(userDatabase[i]->password, inputValue_password) == 0) {
 				onLogIn();
 				navPoint_catalogue->switchTo(navPoint_catalogue);
@@ -636,7 +643,7 @@ void buttonPress_login() {
 	}
 }
 
-// Функция, выполняемая при нажатии на кнопку "Создать" на экране регистрации
+// Функция, выполняемая при нажатии на кнопку "Сохранить" на экране регистрации
 void buttonPress_signup_createUser() {
 	char *password = input_signup_password->getValue(input_signup_password);
 
@@ -659,28 +666,60 @@ void buttonPress_signup_createUser() {
 	
 
 	if (passcheck_hasUppercase == 0) {
+		button_dialogWindow_OK->onInput = buttonPress_dialogWindowOk;
 		drawOverlay_dialogWindow("В пароле нет букв в верхнем регистре.");
 	}
 	else if (passcheck_hasLowercase == 0) {
+		button_dialogWindow_OK->onInput = buttonPress_dialogWindowOk;
 		drawOverlay_dialogWindow("В пароле нет букв в нижнем регистре.");
 	}
 	else if (passcheck_hasNumbers == 0) {
+		button_dialogWindow_OK->onInput = buttonPress_dialogWindowOk;
 		drawOverlay_dialogWindow("В пароле нет цифр.");
 	}
 	else {
-		FILE *fout_users = fopen("users.txt", "a");
-		user* t = (user*)malloc(sizeof(user));
-		t->name = input_signup_username->getValue(input_signup_username);
-		t->password = password;
-		t->cardNumber = input_signup_cardNumber->getValue(input_signup_cardNumber);
-		t->isAdmin = 0;
-		fprintf(fout_users, "\n%s\n%s\n%s\n%i", t->name, t->password, t->cardNumber, t->isAdmin);
-		fclose(fout_users);
-		currentUserIndex = totalUsers;
-		totalUsers++;
-		drawOverlay_dialogWindow("Аккаунт создан.");
-		onLogIn();
-		navPoint_catalogue->switchTo(navPoint_catalogue);
+		if (previousNavPoint == navPoint_settings) {
+			char oldFilename[80] = "favourites/favourite_";
+			strcat(oldFilename, userDatabase[currentUserID]->name);
+			strcat(oldFilename, ".txt");
+			
+			userDatabase[currentUserID]->name = input_signup_username->getValue(input_signup_username);
+			userDatabase[currentUserID]->password = password;
+			userDatabase[currentUserID]->cardNumber = input_signup_cardNumber->getValue(input_signup_cardNumber);
+			
+			FILE *fout_users = fopen("users.txt", "wt");
+			for (int i = 0; i < totalUsers; i++) {
+				fprintf(fout_users, "%s\n%s\n%s\n%i\n", userDatabase[i]->name, userDatabase[i]->password, userDatabase[i]->cardNumber, userDatabase[i]->isAdmin);
+			}
+			fclose(fout_users);
+			
+			char newFilename[80] = "favourites/favourite_";
+			strcat(newFilename, userDatabase[currentUserID]->name);
+			strcat(newFilename, ".txt");
+			int IIII = rename(oldFilename, newFilename);
+
+			printf("<%s>\n", oldFilename);
+			printf("<%s>\n", newFilename);
+			printf("<%i>", IIII);
+			exit(0);
+
+			button_dialogWindow_OK->onInput = goToPreviousPage;
+			drawOverlay_dialogWindow("Изменения сохранены.");
+		}
+		else {
+			FILE *fout_users = fopen("users.txt", "a");
+			user* t = (user*)malloc(sizeof(user));
+			t->name = input_signup_username->getValue(input_signup_username);
+			t->password = password;
+			t->cardNumber = input_signup_cardNumber->getValue(input_signup_cardNumber);
+			t->isAdmin = 0;
+			fprintf(fout_users, "%s\n%s\n%s\n%i\n", t->name, t->password, t->cardNumber, t->isAdmin);
+			fclose(fout_users);
+			currentUserID = totalUsers;
+			totalUsers++;
+			button_dialogWindow_OK->onInput = onLogIn;
+			drawOverlay_dialogWindow("Аккаунт создан.");
+		}
 	}
 	
 
@@ -750,11 +789,16 @@ film *findFilm(char *title) {
 }
 
 // Функция чтения списка избранного пользователя с указанным ID
-void readFavoriteList(int userID) {
-	char filename[80] = "favorite_";
+void readfavouriteList(int userID) {
+	char filename[80] = "favourites/favourite_";
 	strcat(filename, userDatabase[userID]->name);
 	strcat(filename, ".txt");
   FILE *fin_favouriteFilms = fopen(filename, "rt");
+	if (fin_favouriteFilms == NULL) {
+  	fin_favouriteFilms = fopen(filename, "a");
+		fclose(fin_favouriteFilms);
+		return;
+	}
   while (!feof(fin_favouriteFilms)) {
     film *t = (film*)malloc(sizeof(film));
     char  *title = fgetsPlus(fin_favouriteFilms, 128);
@@ -801,20 +845,30 @@ void goToPreviousPage() {
 }
 
 void resetAllTextInputsBesidesCurrent() {
-	if (strcmp(currentNavPoint->title,"ВХОД") != 0) {
+	if (currentNavPoint != navPoint_logIn) {
 		input_login_username->resetValue(input_login_username);
 		input_login_password->resetValue(input_login_password);
 	}
-	if (strcmp(currentNavPoint->title,"РЕГИСТРАЦИЯ") != 0) {
+	if (currentNavPoint != navPoint_signUp) {
 		input_signup_username->resetValue(input_signup_username);
 		input_signup_password->resetValue(input_signup_password);
 		input_signup_cardNumber->resetValue(input_signup_cardNumber);
 	}
 }
 
+void editCurrentUserData() {
+  input_signup_username->setValue(input_signup_username, userDatabase[currentUserID]->name);
+  input_signup_password->setValue(input_signup_password, userDatabase[currentUserID]->password);
+  input_signup_cardNumber->setValue(input_signup_cardNumber, userDatabase[currentUserID]->cardNumber);
+  navPoint_signUp->switchTo(navPoint_signUp);
+}
+
+void clearCurrentUserFavourites() {
+  
+}
+
 void initAllElements() {
 	// Вход //////////////////////////////////////////////////
-	
 	input_login_username = uiInit_textInput(50, 10, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
 	input_login_password = uiInit_textInput(50, 15, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
 	button_login_ok = uiInit_button(50, 19, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Войти");
@@ -828,7 +882,7 @@ void initAllElements() {
 	input_signup_password = uiInit_textInput(50, 15, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
 	input_signup_cardNumber = uiInit_textInput(50, 20, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 16, 16, 48, 57);
 	button_signup_toLogInPage = uiInit_button(50, 23, 0, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Назад");
-	button_signup_ok = uiInit_button(63, 23, 0, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Создать");
+	button_signup_ok = uiInit_button(63, 23, 0, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Сохранить");
 	
 	button_signup_ok->onInput = buttonPress_signup_createUser;
 	button_signup_toLogInPage->onInput = drawLogInView;
@@ -849,8 +903,20 @@ button_catalogue_toDetailsPage = uiInit_button(29, 19, 52, COLOR_BACKGROUND_FRON
 	button_details_toCatalogue->onInput = goToPreviousPage;
 	button_details_toggleFavouriteState->onInput = toggleFavouriteStateOfCurrentFilm;
 	
-	// Вход //////////////////////////////////////////////////
-	// Вход //////////////////////////////////////////////////
+	// Настройки //////////////////////////////////////////////////
+	button_settings_toSignUpPage = uiInit_button(4, 14, 30, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT, "Изменить данные");
+	button_settings_clearFavourites = uiInit_button(4, 17, 30, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT, "Очистить избранное");
+	button_settings_goBack = uiInit_button(4, 20, 30, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT, "Назад");
+
+  button_settings_toSignUpPage->onInput = editCurrentUserData;
+  button_settings_clearFavourites->onInput = clearCurrentUserFavourites;
+	button_settings_goBack->onInput = goToPreviousPage;
+  
+	// Диалоговое окно //////////////////////////////////////////////////
+	button_dialogWindow_OK = uiInit_button(VIEWPORT_WIDTH-5-3, 1, VIEWPORT_WIDTH-3, COLOR_BACKGROUND_DIALOG, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, "OK");
+	button_dialogWindow_OK->onInput = buttonPress_dialogWindowOk;
+	button_dialogWindow_OK->previous = button_dialogWindow_OK;
+	button_dialogWindow_OK->next = button_dialogWindow_OK;
 }
 
 void linkLogInSignUpElements() {
@@ -882,25 +948,19 @@ void linkLogInSignUpElements() {
 // Функция инициализации и связывания всех элементов в приложении
 void linkMainUIElements() {
 	// Каталог //////////////////////////////////////////////////////
-	
-	
 	button_catalogue_toDetailsPage->next = button_catalogue_toggleFavouriteState;
 	button_catalogue_toggleFavouriteState->next = button_catalogue_toDetailsPage;
 	button_catalogue_toDetailsPage->previous = button_catalogue_toggleFavouriteState;
 	button_catalogue_toggleFavouriteState->previous = button_catalogue_toDetailsPage;
 	
-	// IF ADMIN
-	if (userDatabase[currentUserIndex]->isAdmin == 1) {
+	if (userDatabase[currentUserID]->isAdmin == 1) {
 		button_catalogue_toggleFavouriteState->next = button_catalogue_adminRemoveFilm;
 		button_catalogue_adminRemoveFilm->next = button_catalogue_toDetailsPage;
 		button_catalogue_adminRemoveFilm->previous = button_catalogue_toggleFavouriteState;
 		button_catalogue_toDetailsPage->previous = button_catalogue_adminRemoveFilm;
 	}
 	
-	
 	// Детальный просмотр //////////////////////////////////////////////////////
-	
-	
 	button_details_toCatalogue->next = button_details_toggleFavouriteState;
 	button_details_toggleFavouriteState->next = button_details_toCatalogue;
 	
@@ -909,16 +969,16 @@ void linkMainUIElements() {
 
 	
 	// Настройки //////////////////////////////////////////////////////
-	
-/*
+	button_settings_toSignUpPage->next = button_settings_clearFavourites;
+	button_settings_clearFavourites->next = button_settings_goBack;
 	button_settings_goBack->next = button_settings_toSignUpPage;
-	button_settings_toSignUpPage->next = button_settings_goBack;
 	
-	button_settings_goBack->previous = button_settings_toSignUpPage;
 	button_settings_toSignUpPage->previous = button_settings_goBack;
+	button_settings_clearFavourites->previous = button_settings_toSignUpPage;
+	button_settings_goBack->previous = button_settings_clearFavourites;
 	
 	// Добавление фильма //////////////////////////////////////////////////////
-	
+/*
 	button_addFilm_toCatalogue->next = button_addFilm_ok;
 	button_addFilm_ok->next = button_addFilm_toCatalogue;
 	
@@ -935,25 +995,23 @@ int enterKeyDebug() {
 	}
 }
 
-// Функция, выполняющаяся при входе в аккаунт.
-// Переносит пользователя в каталог.
 void onLogIn() {
 	navPoints_normalMode();
-	readFavoriteList(currentUserIndex);
+	readfavouriteList(currentUserID);
 	linkMainUIElements();
 	navPoint_logIn->title = "ВЫЙТИ ИЗ АККАУНТА";
+	navPoint_catalogue->switchTo(navPoint_catalogue);
 }
 
-// Функция, выполняющаяся при выходе из аккаунта.
-// Переносит пользователя на экран входа.
 void logOff() {
-	currentUserIndex = -1;
+	currentUserID = -1;
 	navPoints_loggedOffMode();
 	navPoint_logIn->title = "ВХОД";
 	navPoint_logIn->switchTo(navPoint_logIn);
 }
 
 int main(void) {
+  setlocale(LC_ALL, "ru-RU");
   system("clear");
   cursorHide();
   goToPoint(0, 0);
@@ -966,8 +1024,9 @@ int main(void) {
   currentFilm->next = firstFilm;
   currentFilm = firstFilm;
 	readUserList();
-
+  
 	logOff();
+
 	
   return 0;
 }

@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <locale.h>
 
 film* currentFilm = NULL;
 film* firstFilm = NULL;
@@ -936,6 +935,8 @@ int enterKeyDebug() {
 	}
 }
 
+// Функция, выполняющаяся при входе в аккаунт.
+// Переносит пользователя в каталог.
 void onLogIn() {
 	navPoints_normalMode();
 	readFavoriteList(currentUserIndex);
@@ -943,6 +944,8 @@ void onLogIn() {
 	navPoint_logIn->title = "ВЫЙТИ ИЗ АККАУНТА";
 }
 
+// Функция, выполняющаяся при выходе из аккаунта.
+// Переносит пользователя на экран входа.
 void logOff() {
 	currentUserIndex = -1;
 	navPoints_loggedOffMode();
@@ -951,7 +954,6 @@ void logOff() {
 }
 
 int main(void) {
-  setlocale(LC_ALL, "ru-RU");
   system("clear");
   cursorHide();
   goToPoint(0, 0);
@@ -966,8 +968,6 @@ int main(void) {
 	readUserList();
 
 	logOff();
-	
-  // https://stackoverflow.com/questions/10463201/getch-and-arrow-codes
 	
   return 0;
 }

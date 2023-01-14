@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Обработка нажатия клавиш стрелок на клавиатуре:
+// https://stackoverflow.com/questions/10463201/getch-and-arrow-codes
+
 // "Импорт" переменных из main.c
 extern film *currentFilm;
 extern navPoint *currentNavPoint;
@@ -32,14 +35,14 @@ typedef struct uiElement {
 	struct uiElement* previous;
 } uiElement;
 
+// Очистить значение элемента.
 void* resetValueOfElement(uiElement *element) {
-  for (int i = 0; i < element->limit_high; i++) {
-    element->value[i] = ' ';
-  }
   element->value[0] = '\0';
 	element->length = 0;
 }
 
+// Сделать данное текстовое поле активным элементом.
+// Отвечает за обработку событий клавиатуры.
 char* uiTextInput_onFocus(uiElement *element) {
 	int x = element->x1+2;
 	int y = element->y+1;
@@ -124,6 +127,8 @@ char* uiTextInput_onFocus(uiElement *element) {
 	return element->value;
 }
 
+// Сделать данную кнопку активным элементом.
+// Отвечает за обработку событий клавиатуры.
 void uiButton_onFocus(uiElement *element) {
 	int x = element->x1+2;
 	int y = element->y+1;
@@ -197,27 +202,32 @@ void uiButton_onFocus(uiElement *element) {
 	}
 }
 
+// Функция, рисующая данное текстовое поле.
 void showTextInput(uiElement* element) {
 	drawInputBox(element->x1, element->y, element->x2, element->color_bg, element->color_fill);
   goToPoint(element->x1+2, element->y+1);
   printFm(element->value, element->color_fill, element->color_text);
 }
 
+// Функция, рисующая данную кнопку.
 void showButton(uiElement* element) {
 	drawInputBox(element->x1, element->y, element->x2, element->color_bg, element->color_fill);
 	goToPoint(element->x1+2, element->y+1);
 	printFm(element->value, element->color_fill, COLOR_TEXT_FRONT);
 }
 
+// Функция, возвращающая значение элемента.
 char* getValue(uiElement* element) {
 	return element->value;
 }
 
+// Функция, изменяющая значение элемента на нужное.
 void setValue(uiElement* element, char* value) {
 	strcpy(element->value, value);
 	element->length = strlenPlus(element->value);
 }
 
+// Функция, создающая элемент "Текстовое поле" для дальнйшей работы.
 uiElement* uiInit_textInput(int x1, int y, int x2, char* color_bg, char* color_fill, char* color_text, int limit_low, int limit_high, int asciilim_low, int asciilim_high) {
 	uiElement *element = (uiElement*)malloc(sizeof(uiElement));
 	element->x1 = x1;
@@ -241,6 +251,7 @@ uiElement* uiInit_textInput(int x1, int y, int x2, char* color_bg, char* color_f
 	return element;
 }
 
+// Функция, создающая элемент "Кнопка" для дальнйшей работы.
 uiElement* uiInit_button(int x1, int y, int x2, char* color_bg, char* color_fill, char* color_text, char* value) {
 	uiElement *element = (uiElement*)malloc(sizeof(uiElement));
 	element->x1 = x1;

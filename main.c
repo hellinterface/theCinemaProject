@@ -1,5 +1,4 @@
-#include "types.h"
-#include "views.h"
+#include "global.h"
 #include "graphics.h"
 #include "termiosWrapper.h"
 #include "uiElements.h"
@@ -870,7 +869,6 @@ void clearCurrentUserFavourites() {
 
 void initAllElements() {
 	// Вход //////////////////////////////////////////////////
-	
 	input_login_username = uiInit_textInput(50, 10, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
 	input_login_password = uiInit_textInput(50, 15, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
 	button_login_ok = uiInit_button(50, 19, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Войти");
@@ -906,7 +904,6 @@ button_catalogue_toDetailsPage = uiInit_button(29, 19, 52, COLOR_BACKGROUND_FRON
 	button_details_toggleFavouriteState->onInput = toggleFavouriteStateOfCurrentFilm;
 	
 	// Настройки //////////////////////////////////////////////////
-  
 	button_settings_toSignUpPage = uiInit_button(4, 14, 30, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT, "Изменить данные");
 	button_settings_clearFavourites = uiInit_button(4, 17, 30, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT, "Очистить избранное");
 	button_settings_goBack = uiInit_button(4, 20, 30, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT, "Назад");
@@ -951,14 +948,11 @@ void linkLogInSignUpElements() {
 // Функция инициализации и связывания всех элементов в приложении
 void linkMainUIElements() {
 	// Каталог //////////////////////////////////////////////////////
-	
-	
 	button_catalogue_toDetailsPage->next = button_catalogue_toggleFavouriteState;
 	button_catalogue_toggleFavouriteState->next = button_catalogue_toDetailsPage;
 	button_catalogue_toDetailsPage->previous = button_catalogue_toggleFavouriteState;
 	button_catalogue_toggleFavouriteState->previous = button_catalogue_toDetailsPage;
 	
-	// IF ADMIN
 	if (userDatabase[currentUserID]->isAdmin == 1) {
 		button_catalogue_toggleFavouriteState->next = button_catalogue_adminRemoveFilm;
 		button_catalogue_adminRemoveFilm->next = button_catalogue_toDetailsPage;
@@ -966,10 +960,7 @@ void linkMainUIElements() {
 		button_catalogue_toDetailsPage->previous = button_catalogue_adminRemoveFilm;
 	}
 	
-	
 	// Детальный просмотр //////////////////////////////////////////////////////
-	
-	
 	button_details_toCatalogue->next = button_details_toggleFavouriteState;
 	button_details_toggleFavouriteState->next = button_details_toCatalogue;
 	
@@ -978,7 +969,6 @@ void linkMainUIElements() {
 
 	
 	// Настройки //////////////////////////////////////////////////////
-	
 	button_settings_toSignUpPage->next = button_settings_clearFavourites;
 	button_settings_clearFavourites->next = button_settings_goBack;
 	button_settings_goBack->next = button_settings_toSignUpPage;
@@ -989,7 +979,6 @@ void linkMainUIElements() {
 	
 	// Добавление фильма //////////////////////////////////////////////////////
 /*
-	
 	button_addFilm_toCatalogue->next = button_addFilm_ok;
 	button_addFilm_ok->next = button_addFilm_toCatalogue;
 	
@@ -1035,14 +1024,9 @@ int main(void) {
   currentFilm->next = firstFilm;
   currentFilm = firstFilm;
 	readUserList();
-
-  currentUserID = 2;
-  onLogIn();
-  navPoint_settings->switchTo(navPoint_settings);
   
 	logOff();
-	
-  // https://stackoverflow.com/questions/10463201/getch-and-arrow-codes
+
 	
   return 0;
 }

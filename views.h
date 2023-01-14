@@ -13,6 +13,7 @@
 #define COLOR_SHADOW_FRONT "60;40;120"
 #define COLOR_SHADOW_BACK "33;26;66"
 
+void goToPreviousPage();
 void onLogIn();
 void logOff();
 void resetAllTextInputsBesidesCurrent();

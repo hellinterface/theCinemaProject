@@ -48,6 +48,8 @@ struct navPointRoll {
 	navPoint *next;
 };
 
+int switchToFavorite_next();
+int switchToFavorite_previous();
 void goToPreviousPage();
 void onLogIn();
 void logOff();

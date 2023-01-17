@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <locale.h>
 
 film* currentFilm = NULL;
 film* firstFilm = NULL;
@@ -45,8 +44,13 @@ uiElement* button_settings_clearFavourites;
 uiElement* button_settings_toSignUpPage;
 
 // Элементы: страница добавления фильма
-uiElement* button_addFilm_toCatalogue;
+uiElement* button_addFilm_goBack;
 uiElement* button_addFilm_ok;
+uiElement* input_addFilm_title;
+uiElement* input_addFilm_year;
+uiElement* input_addFilm_country;
+uiElement* input_addFilm_genre;
+uiElement* input_addFilm_rating;
 
 uiElement* button_dialogWindow_OK;
 
@@ -395,23 +399,40 @@ void drawCatalogue() {
   button_catalogue_toDetailsPage->focus(button_catalogue_toDetailsPage);
 }
 
-// Функция рисовки страницы просмотра избранного
-void drawFavourites() {
-  int found = 1;
+int switchToFavorite_next() {
+  int found = 2;
   film *first = currentFilm;
-  currentFilm = currentFilm->next;
-  //currentFilm = firstFilm->next;
-  while (currentFilm->isFavourite == 0) {
+  while (currentFilm->isFavourite == 0 && found != 0) {
     if (first == currentFilm) {
-      found = 0;
-      break;
+      found--;
     }  
     currentFilm = currentFilm->next;
   }
-
   if (found == 0) {
+		button_dialogWindow_OK->onInput = buttonPress_dialogWindowOk;
     drawOverlay_dialogWindow("Фильмов в избранном нет");
   }
+	return found;
+}
+
+int switchToFavorite_previous() {
+  int found = 2;
+  film *first = currentFilm;
+  while (currentFilm->isFavourite == 0 && found != 0) {
+    if (first == currentFilm) {
+      found--;
+    }  
+    currentFilm = currentFilm->previous;
+  }
+  if (found == 0) {
+		button_dialogWindow_OK->onInput = buttonPress_dialogWindowOk;
+    drawOverlay_dialogWindow("Фильмов в избранном нет");
+  }
+	return found;
+}
+
+// Функция рисовки страницы просмотра избранного
+void drawFavourites() {
   
 	system("clear");
   goToPoint(0, 0);
@@ -545,25 +566,31 @@ void drawAddFilmView() {
 	}
 	drawHeader(currentNavPoint->title);
 	
-  goToPoint(4, 6);
-  printFm("Название фильма: ", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
-  printFm("123", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
+  goToPoint(10, 5);
+  printFm("Название фильма", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
 
-  goToPoint(4, 8);
-  printFm("Рейтинг: ", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
-  printFm("123", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
+  goToPoint(10, 10);
+  printFm("Год", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
 	
-  goToPoint(4, 10);
-  printFm("Страна: ", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
-  printFm("123", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
+  goToPoint(10, 15);
+  printFm("Страна", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
 	
-  goToPoint(4, 12);
-  printFm("Жанры: ", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
-  printFm("123", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
+  goToPoint(10, 20);
+  printFm("Жанры", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
+		
+  goToPoint(10, 25);
+  printFm("Рейтинг", COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT);
 
-	button_details_toCatalogue->show(button_details_toCatalogue);
 	
-	button_details_toCatalogue->focus(button_details_toCatalogue);
+	input_addFilm_title->show(input_addFilm_title);
+	input_addFilm_year->show(input_addFilm_year);
+	input_addFilm_country->show(input_addFilm_country);
+	input_addFilm_genre->show(input_addFilm_genre);
+	input_addFilm_rating->show(input_addFilm_rating);
+	button_addFilm_ok->show(button_addFilm_ok);
+	button_addFilm_goBack->show(button_addFilm_goBack);
+	
+	input_addFilm_title->focus(input_addFilm_title);
 }
 
 // Функция выхода из приложения
@@ -679,7 +706,7 @@ void buttonPress_signup_createUser() {
 	}
 	else {
 		if (previousNavPoint == navPoint_settings) {
-			char oldFilename[80] = "favourites/favourite_";
+			char oldFilename[120] = "favourites/favourite_";
 			strcat(oldFilename, userDatabase[currentUserID]->name);
 			strcat(oldFilename, ".txt");
 			
@@ -693,15 +720,10 @@ void buttonPress_signup_createUser() {
 			}
 			fclose(fout_users);
 			
-			char newFilename[80] = "favourites/favourite_";
+			char newFilename[120] = "favourites/favourite_";
 			strcat(newFilename, userDatabase[currentUserID]->name);
 			strcat(newFilename, ".txt");
-			int IIII = rename(oldFilename, newFilename);
-
-			printf("<%s>\n", oldFilename);
-			printf("<%s>\n", newFilename);
-			printf("<%i>", IIII);
-			exit(0);
+			rename(oldFilename, newFilename);
 
 			button_dialogWindow_OK->onInput = goToPreviousPage;
 			drawOverlay_dialogWindow("Изменения сохранены.");
@@ -717,21 +739,17 @@ void buttonPress_signup_createUser() {
 			fclose(fout_users);
 			currentUserID = totalUsers;
 			totalUsers++;
+			
+			char filename[120] = "favourites/favourite_";
+			strcat(filename, t->name);
+			strcat(filename, ".txt");
+  		FILE *f = fopen(filename, "a");
+			fclose(f);
+			
 			button_dialogWindow_OK->onInput = onLogIn;
 			drawOverlay_dialogWindow("Аккаунт создан.");
 		}
 	}
-	
-
-	//t->name = input_signup_username->getValue(input_signup_username);
-	//t->password = 
-	//t->cardNumber = 
-	//->isAdmin = 0;
-
-	//printf(">>> %s", t->password);
-
-	//fprintf(fout_users, "%s\n%s\n%s\n%i\n", t->name, t->password, t->cardNumber, t->isAdmin);
-
 }
 
 // Функция чтения списка фильмов (films.txt)
@@ -789,19 +807,28 @@ film *findFilm(char *title) {
 }
 
 // Функция чтения списка избранного пользователя с указанным ID
-void readfavouriteList(int userID) {
-	char filename[80] = "favourites/favourite_";
+void readFavouriteList(int userID) {
+	char filename[120] = "favourites/favourite_";
 	strcat(filename, userDatabase[userID]->name);
 	strcat(filename, ".txt");
   FILE *fin_favouriteFilms = fopen(filename, "rt");
+
+	film *current = firstFilm->next;
+	firstFilm->isFavourite = 0;
+  while (current != firstFilm) {
+		current->isFavourite = 0; 
+    current = current->next;
+  }
+	
 	if (fin_favouriteFilms == NULL) {
   	fin_favouriteFilms = fopen(filename, "a");
 		fclose(fin_favouriteFilms);
 		return;
 	}
+	
   while (!feof(fin_favouriteFilms)) {
     film *t = (film*)malloc(sizeof(film));
-    char  *title = fgetsPlus(fin_favouriteFilms, 128);
+    char *title = fgetsPlus(fin_favouriteFilms, 128);
 		int temp1;
 		double temp2;
     fscanf(fin_favouriteFilms, "%i\n", &temp1);
@@ -816,6 +843,90 @@ void readfavouriteList(int userID) {
 	fclose(fin_favouriteFilms);
 }
 
+// Записать в файл списка избранного список избранного, который находится в программе.
+void updateFavouriteList(int userID) {
+	char filename[120] = "favourites/favourite_";
+	strcat(filename, userDatabase[userID]->name);
+	strcat(filename, ".txt");
+  FILE *fin_favouriteFilms = fopen(filename, "wt");
+
+	film *current = firstFilm->next;
+	if (firstFilm->isFavourite == 1) {
+		fprintf(fin_favouriteFilms, "%s\n%i\n%s\n%s\n%.1lf\n", firstFilm->title, firstFilm->year, firstFilm->country, firstFilm->genre, firstFilm->rating);
+	};
+  while (current != firstFilm) {
+		if (current->isFavourite == 1) {
+		fprintf(fin_favouriteFilms, "%s\n%i\n%s\n%s\n%.1lf\n", current->title, current->year, current->country, current->genre, current->rating);
+		}
+    current = current->next;
+  }
+	
+	fclose(fin_favouriteFilms);
+}
+
+void clearCurrentUserFavourites() {
+  
+}
+
+// Добавление фильма в список фильмов.
+void buttonPress_addFilm_ok() {
+	input_addFilm_title->getValue(input_addFilm_title);
+	double parsedRating = atof(input_addFilm_rating->getValue(input_addFilm_rating));
+	if (parsedRating > 10 || parsedRating == 0) {
+		button_dialogWindow_OK->onInput = buttonPress_dialogWindowOk;
+		drawOverlay_dialogWindow("Неверный рейтинг.");
+		return;
+	}
+
+	int parsedYear = atoi(input_addFilm_year->getValue(input_addFilm_year));
+	FILE *fout_films = fopen("films.txt", "a");
+	film* t = (film*)malloc(sizeof(film));
+	t->title = input_addFilm_title->getValue(input_addFilm_title);
+	t->year = parsedYear;
+	t->country = input_addFilm_country->getValue(input_addFilm_country);
+	t->genre = input_addFilm_genre->getValue(input_addFilm_genre);
+	t->rating = parsedRating;
+	fprintf(fout_films, "%s\n%i\n%s\n%s\n%.1lf\n", t->title, t->year, t->country, t->genre, t->rating);
+	fclose(fout_films);
+	t->previous = firstFilm->previous;
+	t->next = firstFilm;
+	firstFilm->previous->next = t;
+	firstFilm->previous = t;
+	currentFilm = t;
+	button_dialogWindow_OK->onInput = drawCatalogue;
+	drawOverlay_dialogWindow("Фильм добавлен.");
+}
+
+// it works!
+void buttonPress_removeFilm() {
+	FILE *fout_films = fopen("films.txt", "wt");
+	currentFilm->previous->next = currentFilm->next;
+	currentFilm->next->previous = currentFilm->previous;
+	if (currentFilm == firstFilm) firstFilm = currentFilm->next;
+	film *deletedFilm = currentFilm;
+	currentFilm = deletedFilm->previous;
+	free(deletedFilm);
+	int done = 0;
+	film *t = firstFilm;
+	while (done == 0) {
+		if (t->next == firstFilm) done = 1;
+		fprintf(fout_films, "%s\n%i\n%s\n%s\n%lf\n", t->title, t->year, t->country, t->genre, t->rating);
+		t = t->next;
+	}
+	fclose(fout_films);
+	for (int i = 0; i < totalUsers; i++) {
+		readFavouriteList(i);
+		updateFavouriteList(i);
+	}
+	readFavouriteList(currentUserID);
+	if (currentNavPoint == navPoint_details) {
+		previousNavPoint->switchTo(previousNavPoint);
+	}
+	else {
+		currentNavPoint->switchTo(currentNavPoint);
+	}
+}
+
 // Функция переключения состояния isFavourite активного фильма
 void toggleFavouriteStateOfCurrentFilm() {
 	char* text = "Убрать из избранного";
@@ -826,16 +937,20 @@ void toggleFavouriteStateOfCurrentFilm() {
 	else {
 		currentFilm->isFavourite = 1;
 	}
+	updateFavouriteList(currentUserID);
 	int textLength = strlenPlus(text);
-	if (strcmp(currentNavPoint->title, "ДЕТАЛИ") == 0) {
+	if (currentNavPoint == navPoint_details) {
 		button_details_toggleFavouriteState->value = text;
 		button_details_toggleFavouriteState->length = textLength;
 		button_details_toggleFavouriteState->focus(button_details_toggleFavouriteState);
 	}
-	else if (strcmp(currentNavPoint->title, "КАТАЛОГ") == 0) {
+	else if (currentNavPoint == navPoint_catalogue) {
 		button_catalogue_toggleFavouriteState->value = text;
 		button_catalogue_toggleFavouriteState->length = textLength;
 		button_catalogue_toggleFavouriteState->focus(button_catalogue_toggleFavouriteState);
+	}
+	else if (currentNavPoint == navPoint_favourites) {
+		navPoint_favourites->switchTo(navPoint_favourites);
 	}
 }
 
@@ -854,8 +969,16 @@ void resetAllTextInputsBesidesCurrent() {
 		input_signup_password->resetValue(input_signup_password);
 		input_signup_cardNumber->resetValue(input_signup_cardNumber);
 	}
+	if (currentNavPoint != navPoint_addFilm) {
+		input_addFilm_title->resetValue(input_addFilm_title);
+		input_addFilm_year->resetValue(input_addFilm_year);
+		input_addFilm_country->resetValue(input_addFilm_country);
+		input_addFilm_genre->resetValue(input_addFilm_genre);
+		input_addFilm_rating->resetValue(input_addFilm_rating);
+	}
 }
 
+// Открыть экран редактирования данных пользователя
 void editCurrentUserData() {
   input_signup_username->setValue(input_signup_username, userDatabase[currentUserID]->name);
   input_signup_password->setValue(input_signup_password, userDatabase[currentUserID]->password);
@@ -863,14 +986,10 @@ void editCurrentUserData() {
   navPoint_signUp->switchTo(navPoint_signUp);
 }
 
-void clearCurrentUserFavourites() {
-  
-}
-
 void initAllElements() {
 	// Вход //////////////////////////////////////////////////
-	input_login_username = uiInit_textInput(50, 10, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
-	input_login_password = uiInit_textInput(50, 15, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
+	input_login_username = uiInit_textInput(50, 10, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 'E');
+	input_login_password = uiInit_textInput(50, 15, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 'E');
 	button_login_ok = uiInit_button(50, 19, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Войти");
 	button_login_toSignUpPage = uiInit_button(50, 22, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Создать аккаунт");
 	
@@ -878,9 +997,9 @@ void initAllElements() {
 	button_login_toSignUpPage->onInput = drawSignUpView;
 	
 	// Регистрация //////////////////////////////////////////////////
-	input_signup_username = uiInit_textInput(50, 10, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
-	input_signup_password = uiInit_textInput(50, 15, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 48, 122);
-	input_signup_cardNumber = uiInit_textInput(50, 20, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 16, 16, 48, 57);
+	input_signup_username = uiInit_textInput(50, 10, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 'E');
+	input_signup_password = uiInit_textInput(50, 15, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 3, 20, 'E');
+	input_signup_cardNumber = uiInit_textInput(50, 20, 73, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, 16, 16, 'D');
 	button_signup_toLogInPage = uiInit_button(50, 23, 0, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Назад");
 	button_signup_ok = uiInit_button(63, 23, 0, COLOR_BACKGROUND_FRONT, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Сохранить");
 	
@@ -894,6 +1013,7 @@ button_catalogue_toDetailsPage = uiInit_button(29, 19, 52, COLOR_BACKGROUND_FRON
 	
 	button_catalogue_toDetailsPage->onInput = drawDetailedView;
 	button_catalogue_toggleFavouriteState->onInput = toggleFavouriteStateOfCurrentFilm;
+	button_catalogue_adminRemoveFilm->onInput = buttonPress_removeFilm;
 	
 	// Детальный просмотр //////////////////////////////////////////////////
 	button_details_toCatalogue = uiInit_button(29, 19, 52, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT, "Назад");
@@ -902,6 +1022,7 @@ button_catalogue_toDetailsPage = uiInit_button(29, 19, 52, COLOR_BACKGROUND_FRON
 	
 	button_details_toCatalogue->onInput = goToPreviousPage;
 	button_details_toggleFavouriteState->onInput = toggleFavouriteStateOfCurrentFilm;
+	button_details_toggleFavouriteState->onInput = buttonPress_removeFilm;
 	
 	// Настройки //////////////////////////////////////////////////
 	button_settings_toSignUpPage = uiInit_button(4, 14, 30, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_FRONT, COLOR_TEXT_FRONT, "Изменить данные");
@@ -912,6 +1033,18 @@ button_catalogue_toDetailsPage = uiInit_button(29, 19, 52, COLOR_BACKGROUND_FRON
   button_settings_clearFavourites->onInput = clearCurrentUserFavourites;
 	button_settings_goBack->onInput = goToPreviousPage;
   
+	// Добавление фильма //////////////////////////////////////////////////
+	input_addFilm_title = uiInit_textInput(6, 6, 73, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, 1, 36, 'A');
+	input_addFilm_year = uiInit_textInput(6, 11, 73, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, 4, 4, 'D');
+	input_addFilm_country = uiInit_textInput(6, 16, 73, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, 1, 36, 'A');
+	input_addFilm_genre = uiInit_textInput(6, 21, 73, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, 1, 36, 'A');
+	input_addFilm_rating = uiInit_textInput(6, 26, 28, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, 3, 4, 'F');
+	button_addFilm_ok = uiInit_button(30, 26, 0, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Сохранить");
+	button_addFilm_goBack = uiInit_button(44, 26, 0, COLOR_BACKGROUND_APP, COLOR_BACKGROUND_BACK, COLOR_TEXT_FRONT, "Назад");
+	
+	button_addFilm_ok->onInput = buttonPress_addFilm_ok;
+	button_addFilm_goBack->onInput = goToPreviousPage;
+	
 	// Диалоговое окно //////////////////////////////////////////////////
 	button_dialogWindow_OK = uiInit_button(VIEWPORT_WIDTH-5-3, 1, VIEWPORT_WIDTH-3, COLOR_BACKGROUND_DIALOG, COLOR_BACKGROUND_APP, COLOR_TEXT_FRONT, "OK");
 	button_dialogWindow_OK->onInput = buttonPress_dialogWindowOk;
@@ -978,13 +1111,23 @@ void linkMainUIElements() {
 	button_settings_goBack->previous = button_settings_clearFavourites;
 	
 	// Добавление фильма //////////////////////////////////////////////////////
-/*
-	button_addFilm_toCatalogue->next = button_addFilm_ok;
-	button_addFilm_ok->next = button_addFilm_toCatalogue;
+
+	input_addFilm_title->next = input_addFilm_year;
+	input_addFilm_year->next = input_addFilm_country;
+	input_addFilm_country->next = input_addFilm_genre;
+	input_addFilm_genre->next = input_addFilm_rating;
+	input_addFilm_rating->next = button_addFilm_ok;
+	button_addFilm_ok->next = button_addFilm_goBack;
+	button_addFilm_goBack->next = input_addFilm_title;
 	
-	button_addFilm_toCatalogue->previous = button_addFilm_ok;
-	button_addFilm_ok->previous = button_addFilm_toCatalogue;
-*/
+	input_addFilm_title->previous = button_addFilm_goBack;
+	input_addFilm_year->previous = input_addFilm_title;
+	input_addFilm_country->previous = input_addFilm_year;
+	input_addFilm_genre->previous = input_addFilm_country;
+	input_addFilm_rating->previous = input_addFilm_genre;
+	button_addFilm_ok->previous = input_addFilm_rating;
+	button_addFilm_goBack->previous = button_addFilm_ok;
+	
 }
 
 int enterKeyDebug() {
@@ -997,9 +1140,11 @@ int enterKeyDebug() {
 
 void onLogIn() {
 	navPoints_normalMode();
-	readfavouriteList(currentUserID);
+	readFavouriteList(currentUserID);
 	linkMainUIElements();
 	navPoint_logIn->title = "ВЫЙТИ ИЗ АККАУНТА";
+	navPoint_signUp->title = "ИЗМЕНЕНИЕ ДАННЫХ";
+	//navPoint_addFilm->switchTo(navPoint_addFilm);
 	navPoint_catalogue->switchTo(navPoint_catalogue);
 }
 
@@ -1007,15 +1152,17 @@ void logOff() {
 	currentUserID = -1;
 	navPoints_loggedOffMode();
 	navPoint_logIn->title = "ВХОД";
+	navPoint_signUp->title = "РЕГИСТРАЦИЯ";
 	navPoint_logIn->switchTo(navPoint_logIn);
 }
 
 int main(void) {
-  setlocale(LC_ALL, "ru-RU");
   system("clear");
   cursorHide();
   goToPoint(0, 0);
 
+	// enterKeyDebug();
+	
 	initNavPoints();
 	initAllElements();
 	linkLogInSignUpElements();
@@ -1024,9 +1171,12 @@ int main(void) {
   currentFilm->next = firstFilm;
   currentFilm = firstFilm;
 	readUserList();
-  
+
+	currentUserID = 0;
+	
+	onLogIn();
+	
 	logOff();
 
-	
   return 0;
 }
